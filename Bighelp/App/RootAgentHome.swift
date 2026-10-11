@@ -126,9 +126,7 @@ extension RootShellView {
         }
         // A Bot Chat opened before is saved here: open it at once (its chat loads from
         // Hermes as usual) rather than wait a second or two on the lookup.
-        if let saved = sessionCatalog.records.first(where: {
-            $0.kind == .direct && $0.agentIDs == [profileID] && $0.title == "Bot Chat"
-        }) {
+        if let saved = sessionCatalog.records.first(where: { $0.isBotChat && $0.agentIDs == [profileID] }) {
             showAgentChat(saved, fromList: fromList, startsVoice: startsVoice)
             return
         }
@@ -282,6 +280,31 @@ extension RootShellView {
         newChatPicker = NewChatPickerRequest(seed: seed, owner: owner)
     }
 
+    /// This chat › New Bot Chat, offered only in an agent's Bot Chat.
+    func botChatRestart(_ conversationID: String) -> (() -> Void)? {
+        guard let record = sessionCatalog.session(id: conversationID), record.isBotChat else { return nil }
+        return { startNewBotChat(record) }
+    }
+
+    /// This chat › New Bot Chat: the open Bot Chat becomes a regular chat named for
+    /// now, and the agent's new Bot Chat opens in its place, a fresh start when a
+    /// long one has filled its context.
+    func startNewBotChat(_ record: SessionRecord) {
+        guard let agentID = record.agentIDs.first else { return }
+        let fromList = appState.chatOpenedFromList
+        Task { @MainActor in
+            do {
+                try await sessionCatalog.renameSession(id: record.id, title: SessionRecord.retiredBotChatTitle(at: .now))
+            } catch is CancellationError {
+                return
+            } catch {
+                actionErrorMessage = "bighelp couldn't start a new Bot Chat. Check the connection and try again."
+                return
+            }
+            openCanonicalAgentChat(agentID, fromList: fromList)
+        }
+    }
+
     /// A 1:1 chat from the New chat picker; that agent becomes the home agent.
     func startHomeChat(with agentID: String) {
         agents.select(agentID)
@@ -290,11 +313,21 @@ extension RootShellView {
         startNewChat(explicitAgentID: agentID)
     }
 
-    /// Message resumes the agent's Bot Chat. Only explicit New chat allocates
-    /// an ordinary conversation; the all-hosts view keeps its Back navigation.
+    /// An agent tapped on Agents opens what Settings › Chat › Bot chat experience
+    /// asks for: its Bot Chat, its latest chat, or a new one. The all-hosts view
+    /// keeps its Back navigation (`openFleetAgent` is its version).
     func openAgentChat(_ agentID: String) {
         agents.select(agentID)
-        openCanonicalAgentChat(agentID, fromList: fleetModeOn)
+        switch settings.botChatExperience {
+        case .botChat:
+            openCanonicalAgentChat(agentID, fromList: fleetModeOn)
+        case .lastChat:
+            openLatestAgentChat(agentID, fromList: fleetModeOn, startsVoice: false)
+        case .newChat:
+            if appState.selectedTab != .sessions { appState.select(.sessions) }
+            appState.chatOpenedFromList = fleetModeOn
+            startNewChat(explicitAgentID: agentID)
+        }
     }
 
     func inviteToGroup(seed: String?) {
