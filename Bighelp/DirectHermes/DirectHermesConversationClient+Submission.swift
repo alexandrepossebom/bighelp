@@ -95,7 +95,11 @@ extension DirectHermesConversationClient {
                         } else {
                             params[command ? "command" : "text"] = .string(message)
                         }
-                        if voiceReply { params["surface"] = .string("voice-live") }
+                        if voiceReply {
+                            params["surface"] = .string("voice-live")
+                            // Hermes runs a spoken turn on Settings' Voice Chat model (auxiliary.voice_chat).
+                            if !command { params["voice_turn"] = .boolean(true) }
+                        }
                         // If another surface wins the idle race, queue rather
                         // than applying the host's default interrupt/redirect.
                         if !command { params["queued"] = .boolean(true) }
@@ -228,6 +232,50 @@ extension DirectHermesConversationClient {
         // The interrupt receipt requests cancellation; the settled session.info
         // remains authoritative for the adapter's terminal state and journal.
         status = "Stop requested"
+    }
+
+    /// This chat › Compact: Hermes folds the chat's earlier messages into a summary
+    /// (`session.compress`), the same chat with a lighter context. The rail shows at once
+    /// and follows Hermes' own status; the receipt adds the exact before and after. A
+    /// compaction outlasting the request carries on, and its status still ends the rail.
+    func compact(conversationID: String) async throws {
+        try validate(conversationID)
+        let owner = generation
+        model?.beginCompaction()
+        let receipt: [String: BighelpJSONValue]
+        do {
+            receipt = try await rpc.request("session.compress", params: sessionParams).object ?? [:]
+        } catch DirectHermesError.timedOut {
+            return
+        } catch {
+            if owner == generation { model?.cancelCompaction() }
+            throw error
+        }
+        guard owner == generation else { return }
+        switch receipt["status"]?.string {
+        case "compressed" where (receipt["removed"]?.integer ?? 1) > 0:
+            model?.finishCompaction(tokensBefore: receipt["before_tokens"]?.integer,
+                                    tokensAfter: receipt["after_tokens"]?.integer)
+        case "pending":
+            break
+        default:
+            // Too little to fold, or Hermes declined (another compaction holds the chat).
+            model?.cancelCompaction()
+        }
+    }
+
+    /// Hermes compacting this chat: "compressing" for one asked for, "compacting" for one
+    /// it starts during a turn. Its next status, or the reply carrying on, ends it.
+    func trackCompaction(_ event: DirectHermesEvent, status: DirectHermesStatusUpdate?) {
+        if let status, ["compressing", "compacting"].contains(status.kind) {
+            model?.beginCompaction(status: status.text)
+            return
+        }
+        guard model?.compaction?.phase == .compacting else { return }
+        if status != nil || event.type.hasPrefix("message.") || event.type.hasPrefix("tool.")
+            || event.type == "thinking.delta" {
+            model?.finishCompaction()
+        }
     }
 
     func sendMidSession(message: String, attachments: [ChatAttachment], conversationID: String,
