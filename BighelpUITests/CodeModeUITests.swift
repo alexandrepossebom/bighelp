@@ -144,8 +144,9 @@ final class CodeModeUITests: BighelpUITestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Plan")).firstMatch.tap()
         XCTAssertEqual(app.buttons["code.composer.mode"].label, "Mode: Plan")
 
-        // A long model chip ("GPT-5.6 Mini · X-High · Fast") truncates; the buttons beside it keep their place.
-        app.buttons["code.composer.model"].tap()
+        // The agent chip opens the model, reasoning and fast mode; Send sits beside the text, and the
+        // agent, mode and Stage each keep a full-size place on the line under it.
+        app.buttons["code.composer.agent"].tap()
         app.buttons["code.runtime.model"].tap()
         let mini = app.buttons["code.runtime.model.openai.gpt-5.6-mini"]
         XCTAssertTrue(mini.waitForExistence(timeout: 5))
@@ -156,14 +157,18 @@ final class CodeModeUITests: BighelpUITestCase {
         app.buttons["code.runtime.fast"].tap()
         app.buttons["On"].firstMatch.tap()
         app.buttons["Done"].firstMatch.tap()
-        let model = app.buttons["code.composer.model"]
+        let agent = app.buttons["code.composer.agent"]
         let mode = app.buttons["code.composer.mode"]
+        let stageButton = app.buttons["code.composer.stage"]
         let sendButton = app.buttons["code.composer.send"]
-        XCTAssertTrue(model.waitForExistence(timeout: 3))
-        XCTAssertEqual(model.label, "Model: GPT-5.6 Mini · X-High · Fast")
-        XCTAssertLessThanOrEqual(model.frame.maxX, mode.frame.minX + 1, "The model name stops before the mode button.")
-        XCTAssertLessThanOrEqual(mode.frame.maxX, sendButton.frame.minX + 1)
-        XCTAssertTrue(sendButton.isHittable)
+        XCTAssertTrue(agent.waitForExistence(timeout: 3))
+        XCTAssertTrue(agent.label.hasSuffix("GPT-5.6 Mini · X-High · Fast"), agent.label)
+        XCTAssertLessThan(sendButton.frame.maxY, agent.frame.minY + 1, "Send sits beside the text, above the chips.")
+        XCTAssertLessThanOrEqual(agent.frame.maxX, mode.frame.minX - 4, "The agent stops before the mode.")
+        XCTAssertLessThanOrEqual(mode.frame.maxX, stageButton.frame.minX - 4)
+        for control in [agent, mode, stageButton, sendButton] {
+            XCTAssertGreaterThanOrEqual(control.frame.height, 44, "\(control.identifier) is a full-size target")
+        }
         save("10-mode", app)
 
         // Changes: the plan file opens on its rendered preview.
@@ -200,7 +205,9 @@ final class CodeModeUITests: BighelpUITestCase {
         field.typeText("Write tests for the branch name helper")
         let sendAll = app.buttons["code.composer.send-all"]
         XCTAssertEqual(sendAll.label, "Send all 3")
-        XCTAssertLessThanOrEqual(sendAll.frame.maxX, element("code.composer.field", in: app).frame.maxX + 2,
+        XCTAssertGreaterThanOrEqual(sendAll.frame.minX, element("code.composer.field", in: app).frame.maxX,
+                                    "Send all sits beside the text.")
+        XCTAssertLessThanOrEqual(sendAll.frame.maxX, app.windows.firstMatch.frame.maxX - 12,
                                  "Send all stays inside the message box.")
         save("12-staged", app)
         sendAll.tap()
@@ -241,6 +248,63 @@ final class CodeModeUITests: BighelpUITestCase {
         XCTAssertTrue(app.staticTexts["To Widget tap"].waitForExistence(timeout: 3) || app.buttons["To Widget tap"].exists
                       || app.otherElements["To Widget tap"].exists, "Only the mentioned session got it.")
         save("17-sent", app)
+    }
+
+    /// Dev Factory on the demo data: ☰ opens it; the sample start shows one card per
+    /// project, and you approve one project's changes there; a template makes a new recipe,
+    /// and Run starts it on the projects you pick.
+    @MainActor
+    func testDevFactoryRecipesRunsAndSignOff() throws {
+        let app = makeApp()
+        let appearance = ProcessInfo.processInfo.environment["BIGHELP_CODE_MODE_APPEARANCE"] ?? "dark"
+        app.launchArguments = ["-use-demo-fixtures", "-disable-demo-delays",
+                               "-bighelp.settings.code-mode", "YES", "-bighelp.settings.code-mode.open-in", "code",
+                               "-loopdy.demo.appearance", appearance]
+        app.launch()
+        XCTAssertTrue(element("code.screen", in: app).waitForExistence(timeout: 10))
+
+        app.buttons["home.drawer.open"].tap()
+        let menuRow = app.buttons["menu.code.dev-factory"]
+        XCTAssertTrue(menuRow.waitForExistence(timeout: 5), "☰ in Bighelp IDE lists Dev Factory.")
+        menuRow.tap()
+        XCTAssertTrue(element("devfactory.home", in: app).waitForExistence(timeout: 8))
+        let group = app.buttons["devfactory.group-row"].firstMatch
+        XCTAssertTrue(group.waitForExistence(timeout: 8), "The sample start runs now.")
+        save("18-factory-home", app)
+
+        group.tap()
+        XCTAssertTrue(element("devfactory.group", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(element("devfactory.run.bighelp-plugin", in: app).waitForExistence(timeout: 8))
+        let approve = app.buttons["devfactory.approve"].firstMatch
+        XCTAssertTrue(approve.waitForExistence(timeout: 8), "A run waiting on its changes offers Approve.")
+        XCTAssertTrue(app.buttons["devfactory.retry"].firstMatch.exists, "Failing tests offer Try again.")
+        save("19-factory-run", app)
+        approve.tap()
+        XCTAssertTrue(approve.waitForNonExistence(timeout: 10), "Approving moves the run on.")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let template = app.buttons["devfactory.template.fix-test-pr"]
+        XCTAssertTrue(template.waitForExistence(timeout: 5))
+        template.tap()
+        let project = app.switches["devfactory.new.project.bighelp"]
+        XCTAssertTrue(project.waitForExistence(timeout: 5))
+        // A form row's switch flips where it draws, at the trailing edge.
+        project.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+        XCTAssertEqual(project.value as? String, "1")
+        save("20-new-recipe", app)
+        app.buttons["devfactory.new.create"].tap()
+        XCTAssertTrue(element("devfactory.recipe", in: app).waitForExistence(timeout: 8), "Create opens the recipe.")
+        save("21-recipe", app)
+
+        app.buttons["devfactory.recipe.run"].tap()
+        let task = element("devfactory.run-sheet.task", in: app)
+        XCTAssertTrue(task.waitForExistence(timeout: 5))
+        task.tap()
+        task.typeText("Fix the widget tap")
+        app.buttons["devfactory.run-sheet.start"].tap()
+        XCTAssertTrue(element("devfactory.group", in: app).waitForExistence(timeout: 8), "Run opens its start.")
+        XCTAssertTrue(element("devfactory.run.bighelp", in: app).waitForExistence(timeout: 8))
+        save("22-new-run", app)
     }
 
     /// Out of the box there's no Bighelp IDE: no switch in ☰.
