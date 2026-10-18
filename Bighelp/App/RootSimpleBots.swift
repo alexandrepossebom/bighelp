@@ -6,9 +6,9 @@ extension RootShellView {
     /// The all-hosts view keeps its own list.
     var simpleBotsOn: Bool { settings.simpleBotsEnabled && !fleetModeOn }
 
-    /// The home on screen: no bar, no ☰; the person's circle opens Settings.
-    var showsSimpleBotsHome: Bool {
-        simpleBotsOn && appState.path.isEmpty && appState.selectedTab == .sessions
+    /// The home is the tab's root, whatever is pushed over it: no bar, no ☰; the person's circle opens Settings.
+    var simpleBotsHomeIsRoot: Bool {
+        simpleBotsOn && appState.selectedTab == .sessions
     }
 
     var simpleBotsHome: some View {
@@ -42,6 +42,28 @@ extension RootShellView {
             makeCreator: { makeSimpleBotCreator() },
             onRoutines: { openSimpleBotRoutines($0) }
         )
+    }
+
+    /// The edge swipes in Simple Bot mode (`effectiveLeftEdgeSwipeAction`): from the left back to your
+    /// bots, from the right this bot's profile (the primary bot's on the home). False for anything else.
+    func performSimpleBotsSwipe(_ action: WorkspaceSwipeAction) -> Bool {
+        switch action {
+        case .agents:
+            appState.select(.sessions)
+            appState.path.removeAll()
+            return true
+        case .profile:
+            let chatBot: String? = if case .chat(let id)? = appState.path.last {
+                featureStore.preparedChatModel(id: id)?.memberIDs.first
+            } else { nil }
+            guard let botID = chatBot ?? agents.primaryAgentID ?? agents.profiles.first(where: \.isDefault)?.id
+            else { return true }
+            if case .simpleBotProfile(let shown)? = appState.path.last, shown == botID { return true }
+            appState.open(.simpleBotProfile(agentID: botID))
+            return true
+        default:
+            return false
+        }
     }
 
     /// A bot's chat over the home, with Back: its Bot Chat, like everywhere else.
@@ -87,6 +109,14 @@ extension RootShellView {
                 guard let owner else { return }
                 workspaceProfileEditor = .editing(profile, store: agents, processor: AvatarImageProcessor(),
                                                   isCurrent: { currentWorkspaceOwner?.signIn == owner.signIn })
+            },
+            makeModelDefaults: { id in
+                let capabilities = currentWorkspaceCapabilities
+                guard usesWorkspaceFixtures || owner.map({
+                    capabilities.supports(.modelsRead, owner: $0, profileID: id)
+                        && capabilities.supports(.agentDefaultsEdit, owner: $0, profileID: id)
+                }) == true else { return nil }
+                return AgentRuntimeDefaultsEditorModel(agentID: id, client: agentRuntimeDefaults)
             }
         )
     }

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import Bighelp
 
@@ -23,6 +24,20 @@ struct SimpleBotsTests {
         #expect(context.darkBackground == .black)
     }
 
+    @Test func edgeSwipesGoToYourBotsAndThisBotsProfile() {
+        let suiteName = #function
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let settings = SettingsStore(defaults: defaults)
+        settings.leftEdgeSwipeAction = .newChat
+        settings.rightEdgeSwipeAction = .none
+        #expect(settings.effectiveLeftEdgeSwipeAction == .newChat, "Your choices everywhere else")
+        settings.simpleBotsEnabled = true
+        #expect(settings.effectiveLeftEdgeSwipeAction == .agents)
+        #expect(settings.effectiveRightEdgeSwipeAction == .profile)
+    }
+
     @Test func simpleLookHasBlackBubblesByDayAndInkAfterDark() {
         var context = BighelpAppearanceContext(appearance: .light, lightBackground: .paper, darkBackground: .black)
         context.simpleBots = true
@@ -36,6 +51,35 @@ struct SimpleBotsTests {
         dark.simpleBots = true
         #expect(BighelpTheme.resolve(appearance: dark, colorScheme: .dark, contrast: .standard).chosenBubbleHex
                 == "3A3A3F")
+    }
+
+    /// Buttons, links and tinted Settings text use the page's ink in Simple Bot mode. The accent used
+    /// to follow the bubble color, which is a dark gray after dark, so tinted text in Settings read as
+    /// grayed out ("Hermes restart", Check Host Status).
+    @Test func simpleLookTintsWithThePagesInk() {
+        for (scheme, ink) in [(ColorScheme.light, "111111"), (.dark, "FFFFFF")] {
+            var context = BighelpAppearanceContext(appearance: scheme == .dark ? .dark : .light,
+                                                   lightBackground: .paper, darkBackground: .black)
+            context.simpleBots = true
+            let theme = BighelpTheme.resolve(appearance: context, colorScheme: scheme, contrast: .standard)
+            #expect(theme.actionHex.uppercased() == ink, "\(scheme): \(theme.actionHex)")
+            #expect(theme.chosenBubbleHex == (scheme == .dark ? "3A3A3F" : "111111"), "Bubbles keep their color")
+        }
+    }
+
+    /// A bubble color picked in Appearance wins in Simple Bot mode too; black and ink are only its default.
+    @Test func simpleLookKeepsThePickedBubbleColor() {
+        for scheme in [ColorScheme.light, .dark] {
+            var context = BighelpAppearanceContext(appearance: scheme == .dark ? .dark : .light,
+                                                   lightBackground: .paper, darkBackground: .black, bubbleColor: .teal)
+            context.simpleBots = true
+            let theme = BighelpTheme.resolve(appearance: context, colorScheme: scheme, contrast: .standard)
+            #expect(theme.chosenBubbleHex == BighelpBubbleColor.teal.hex, "\(scheme)")
+            context.bubbleColor = nil
+            context.customBubbleHex = "#FF2D55"
+            #expect(BighelpTheme.resolve(appearance: context, colorScheme: scheme, contrast: .standard).chosenBubbleHex
+                    == context.customBubbleHex, "\(scheme): a custom color too")
+        }
     }
 
     @Test func defaultMarkIsStableAndColorful() {
@@ -91,8 +135,9 @@ struct SimpleBotsTests {
         let home = SimpleBotsHomeProjection.home(profiles: profiles, primaryID: nil, pinnedIDs: ["havok"],
                                                  summaries: summaries)
         #expect(home.primary?.id == "default", "Without a pick, the default bot leads")
-        #expect(home.rows.map(\.id) == ["bot:havok", "bot:nova", "group:room", "bot:sage", "bot:quiet"])
-        #expect(home.rows[1].preview == "From nova-new", "A bot shows its latest chat")
+        #expect(home.pinned.map(\.id) == ["havok"], "A pinned bot sits beside it")
+        #expect(home.rows.map(\.id) == ["bot:nova", "group:room", "bot:sage", "bot:quiet"])
+        #expect(home.rows[0].preview == "From nova-new", "A bot shows its latest chat")
         #expect(!home.rows.contains { $0.id == "bot:ghost" }, "Hidden bots stay off the home")
 
         let picked = SimpleBotsHomeProjection.home(profiles: profiles, primaryID: "sage", pinnedIDs: [],
@@ -100,6 +145,20 @@ struct SimpleBotsTests {
         #expect(picked.primary?.id == "sage")
         #expect(picked.primaryPreview?.id == "sage")
         #expect(picked.rows.first?.id == "bot:nova")
+    }
+
+    /// Six on top at most: the primary bot and five pinned ones. Later pins lead the list; hidden ones don't show.
+    @Test func topRowHoldsSixBots() {
+        let ids = ["default", "a", "b", "c", "d", "e", "f", "g"]
+        let profiles = ids.map { id in
+            AgentProfile(id: id, name: id.capitalized, role: "", summary: "", instructions: "", avatarFileName: nil,
+                         isDefault: id == "default", placement: id == "b" ? AgentListPlacement(isHidden: true) : nil)
+        }
+        let home = SimpleBotsHomeProjection.home(profiles: profiles, primaryID: nil,
+                                                 pinnedIDs: ["a", "b", "c", "d", "e", "f", "g"], summaries: [])
+        #expect(home.pinned.map(\.id) == ["a", "c", "d", "e", "f"])
+        #expect(1 + home.pinned.count == SimpleBotsHomeProjection.topRowLimit)
+        #expect(home.rows.map(\.id) == ["bot:g"], "The seventh pin leads the list")
     }
 
     @Test func autoReviewIsSmartOrManualAndNeverTurnsApprovalsOff() async throws {

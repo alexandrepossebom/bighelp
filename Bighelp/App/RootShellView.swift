@@ -569,9 +569,10 @@ struct RootShellView: View {
     private var shell: some View {
         rootTabs
         .toolbar(.hidden, for: .tabBar)
-        // Boards and Simple Bot mode's home draw their own header.
-        .toolbar(showsAgentBoard || showsSimpleBotsHome ? .hidden : .automatic, for: .navigationBar)
-        .navigationTitle(showsAgentBoard || showsSimpleBotsHome ? "" : rootNavigationTitle)
+        // Boards and Simple Bot mode's home draw their own header. The home's stays hidden while a
+        // chat is pushed over it too: its bar (with ☰) showed through for the length of Back.
+        .toolbar(showsAgentBoard || simpleBotsHomeIsRoot ? .hidden : .automatic, for: .navigationBar)
+        .navigationTitle(showsAgentBoard || simpleBotsHomeIsRoot ? "" : rootNavigationTitle)
         // One title size on every tab: the bar's. A large title kept the size of the tab before
         // (small after Feed or Kanban, large after Chat), so the same screen looked different.
         .navigationBarTitleDisplayMode(.inline)
@@ -832,8 +833,8 @@ struct RootShellView: View {
     @ViewBuilder
     private func edgeGestureSurface(side: EdgeSide, containerWidth: CGFloat) -> some View {
         let action = side == .left
-            ? settings.leftEdgeSwipeAction
-            : settings.rightEdgeSwipeAction
+            ? settings.effectiveLeftEdgeSwipeAction
+            : settings.effectiveRightEdgeSwipeAction
         Color.clear
             .frame(width: WorkspaceEdgeSwipeResolver.activationEdgeWidth)
             .contentShape(Rectangle())
@@ -852,8 +853,8 @@ struct RootShellView: View {
                             start: CGPoint(x: startX, y: value.startLocation.y),
                             translation: value.translation,
                             containerWidth: containerWidth,
-                            leftAction: settings.leftEdgeSwipeAction,
-                            rightAction: settings.rightEdgeSwipeAction
+                            leftAction: settings.effectiveLeftEdgeSwipeAction,
+                            rightAction: settings.effectiveRightEdgeSwipeAction
                         ) else { return }
                         performWorkspaceAction(resolved)
                     }
@@ -871,6 +872,7 @@ struct RootShellView: View {
     /// Where an edge swipe goes, from any screen (a chat included) and in either mode.
     func performWorkspaceAction(_ action: WorkspaceSwipeAction) {
         BighelpKeyboard.dismiss()
+        if simpleBotsOn, performSimpleBotsSwipe(action) { return }
         switch action {
         case .quickWorkspace:
             presentMenu()

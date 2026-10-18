@@ -71,6 +71,102 @@ final class SimpleBotsUITests: BighelpUITestCase {
         }
     }
 
+    /// A bot's profile: More avatars opens the full studio with the marks in it, and Save comes back
+    /// to the profile; Default Model opens the model and reasoning picker.
+    @MainActor
+    func testProfileOpensTheStudioAndTheModelPicker() throws {
+        let app = launch(appearance: "dark")
+        XCTAssertTrue(app.descendants(matching: .any)["simple-bots.home"].waitForExistence(timeout: 15))
+        app.buttons["simple-bots.primary"].tap()
+        let identity = app.buttons["chat.identity"]
+        XCTAssertTrue(identity.waitForExistence(timeout: 10))
+        identity.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["simple-bots.profile"].waitForExistence(timeout: 5))
+        save("simple-profile-rows-dark", app)
+
+        let more = app.buttons["simple-bots.profile.more-avatars"]
+        XCTAssertTrue(more.waitForExistence(timeout: 5))
+        more.tap()
+        let bots = app.buttons["avatar.creator.category.bots"]
+        XCTAssertTrue(bots.waitForExistence(timeout: 5), "The studio offers the bot marks")
+        XCTAssertTrue(app.buttons["avatar.creator.category.bighelp"].exists, "And every other avatar")
+        bots.tap()
+        // The profile under the sheet has the same picker; these are the studio's.
+        let marks = app.descendants(matching: .any)["avatar.creator.bots"]
+        XCTAssertTrue(marks.waitForExistence(timeout: 5))
+        marks.buttons["simple-bots.shape.heart"].tap()
+        marks.buttons["simple-bots.color.teal"].tap()
+        save("simple-studio-dark", app)
+        app.buttons["Save"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["simple-bots.profile"].waitForExistence(timeout: 5),
+                      "Save comes back to the profile")
+        XCTAssertFalse(app.buttons["avatar.creator.category.bots"].exists)
+
+        let model = app.buttons["simple-bots.profile.default-model"]
+        XCTAssertTrue(model.waitForExistence(timeout: 10), "Default Model is under Instructions")
+        model.tap()
+        XCTAssertTrue(app.navigationBars["Default Model"].waitForExistence(timeout: 5)
+                      || app.staticTexts["Default Model"].waitForExistence(timeout: 2))
+        save("simple-default-model-dark", app)
+    }
+
+    /// A pinned bot joins the primary one in the top row, and goes back to the list when unpinned.
+    @MainActor
+    func testPinnedBotsJoinTheTopRow() throws {
+        let app = launch(appearance: "dark")
+        let listed = app.buttons["simple-bots.bot.travel"]
+        XCTAssertTrue(listed.waitForExistence(timeout: 15))
+        listed.press(forDuration: 1.2)
+        app.buttons["Pin"].tap()
+        let pinned = app.buttons["simple-bots.pinned.travel"]
+        XCTAssertTrue(pinned.waitForExistence(timeout: 5), "Pinned bots sit beside the primary one")
+        XCTAssertFalse(listed.exists, "And leave the list")
+        save("simple-home-pinned-dark", app)
+        pinned.press(forDuration: 1.2)
+        app.buttons["Unpin"].tap()
+        XCTAssertTrue(listed.waitForExistence(timeout: 5), "Unpinned, it's back in the list")
+    }
+
+    /// The message box: voice mode's pill inside it, Send in its place once there's text. Voice opens as a
+    /// bar over the chat, which stays in use, and End closes the bar. Needs the microphone allowed for
+    /// bighelp on the simulator (`simctl privacy … grant microphone`).
+    @MainActor
+    func testVoiceIsABarOverTheChat() throws {
+        let app = makeApp()
+        app.launchArguments = ["-use-demo-fixtures", "-disable-demo-delays", "-preview-ui-v3",
+                               "-bighelp.settings.simple-bots", "YES", "-loopdy.demo.appearance", "dark",
+                               "-loopdy.voice.conversation-mode", "turnBased", "-bighelp.voice.transcription", "hermes"]
+        app.launch()
+        XCTAssertTrue(app.buttons["simple-bots.primary"].waitForExistence(timeout: 15))
+        app.buttons["simple-bots.primary"].tap()
+        let voice = app.buttons["chat.voice"]
+        XCTAssertTrue(voice.waitForExistence(timeout: 10))
+        save("simple-composer-idle-dark", app)
+
+        voice.tap()
+        let bar = app.descendants(matching: .any)["simple-bots.voice"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "Voice is a bar over the chat")
+        XCTAssertFalse(app.descendants(matching: .any)["voice.screen"].exists, "Not the voice screen")
+        XCTAssertTrue(app.buttons["simple-bots.voice.microphone"].exists)
+        XCTAssertTrue(app.buttons["chat.attachment"].isHittable, "The chat stays in use")
+        save("simple-voice-bar-dark", app)
+        app.buttons["simple-bots.voice.end"].tap()
+        let gone = NSPredicate(format: "exists == false")
+        expectation(for: gone, evaluatedWith: bar)
+        waitForExpectations(timeout: 10)
+
+        let input = app.textViews.firstMatch
+        input.tap()
+        input.typeText("Text 123")
+        XCTAssertTrue(app.buttons["chat.send"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["chat.voice"].exists, "Typing swaps voice mode for Send")
+        XCTAssertFalse(app.buttons["chat.composer.expand"].exists, "One line keeps the box full width")
+        save("simple-composer-typing-dark", app)
+        input.typeText(" and a longer draft that wraps onto a second line in the box")
+        XCTAssertTrue(app.buttons["chat.composer.expand"].waitForExistence(timeout: 3),
+                      "Expand sits beside the box once the draft wraps")
+    }
+
     @MainActor
     func testTurningSimpleBotModeOffComesBackToBighelp() throws {
         let app = launch(appearance: "light")

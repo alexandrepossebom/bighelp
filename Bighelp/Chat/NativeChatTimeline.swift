@@ -112,9 +112,11 @@ enum ChatCanvasTranscriptProjection {
                 result.append(.agentTalk(ChatAgentTalk(piece)))
             }
         }
-        func append(_ entry: ChatTranscriptEntry) {
+        func append(_ entry: ChatTranscriptEntry, inOpenedTurn: Bool = false) {
             guard case .activity(let turn) = entry else {
-                if case .message(let item) = entry, let piece = talk.piece(for: item) {
+                if case .message(let item) = entry, talk.hides(item) {
+                    return
+                } else if case .message(let item) = entry, let piece = talk.piece(for: item) {
                     appendTalk(piece)
                 } else {
                     result.append(.transcript(.entry(entry)))
@@ -125,7 +127,11 @@ enum ChatCanvasTranscriptProjection {
             for (index, segment) in segments.enumerated() {
                 switch segment {
                 case .agentTalk(let event):
-                    appendTalk(.call(event, delivery: talk.delivery(for: event)))
+                    appendTalk(.call(event, answer: talk.answer(for: event)))
+                case .workTrail(let trail) where inOpenedTurn:
+                    // The opened "Worked for…" is the folder already: its tools show as they are.
+                    result += trail.events.map(ChatCanvasRow.activityDetail)
+                    result.append(.workTrailEnd(trail.id))
                 case .workTrail(let trail):
                     let isTail = entry.id == tailEntryID && index == segments.count - 1
                     let isLive = isSending && (isTail || trail.events.contains { $0.lifecycle == .running })
@@ -156,7 +162,7 @@ enum ChatCanvasTranscriptProjection {
                                                stepCount: turn.stepCount, summary: turn.summary)
                 result.append(.transcript(.completed(header)))
                 if disclosures.isCompletedTurnExpanded(turn.id) {
-                    turn.expandedEntries.forEach(append)
+                    turn.expandedEntries.forEach { append($0, inOpenedTurn: true) }
                 }
             }
         }
