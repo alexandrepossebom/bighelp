@@ -11,7 +11,7 @@ extension SettingsView {
                 }
                 .padding(.horizontal, BighelpMenuRowLayout.labelInset)
             }
-            .bighelpSettingsRowInsets()
+            .bighelpMacSettingsRowInsets()
             .accessibilityIdentifier("settings.simple-bots")
             Toggle(isOn: $settings.codeModeEnabled) {
                 HStack(spacing: BighelpTokens.space12) {
@@ -20,7 +20,7 @@ extension SettingsView {
                 }
                 .padding(.horizontal, BighelpMenuRowLayout.labelInset)
             }
-            .bighelpSettingsRowInsets()
+            .bighelpMacSettingsRowInsets()
             .accessibilityIdentifier("settings.code-mode")
             if settings.codeModeEnabled {
                 Picker("Open in", selection: $settings.startExperience) {

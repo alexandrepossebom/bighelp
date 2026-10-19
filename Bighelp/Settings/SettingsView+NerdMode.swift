@@ -78,7 +78,7 @@ extension SettingsView {
                 }
                 .padding(.horizontal, BighelpMenuRowLayout.labelInset)
             }
-            .bighelpSettingsRowInsets()
+            .bighelpMacSettingsRowInsets()
             .accessibilityIdentifier("settings.nerd-mode")
         }
         .listRowBackground(theme.surface)
@@ -169,5 +169,17 @@ extension View {
         listRowInsets(BighelpPlatform.isMac
             ? BighelpMenuRowLayout.insets
             : EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+    }
+
+    /// The ☰ menu's row insets on the Mac, so a toggle's or the profile row's icon lines up
+    /// with the other rows'. Elsewhere the row keeps the List's own: these labels set no
+    /// height, and without the List's room their wrapped text touched the card's edges.
+    @ViewBuilder
+    func bighelpMacSettingsRowInsets() -> some View {
+        #if targetEnvironment(macCatalyst)
+        listRowInsets(BighelpMenuRowLayout.insets)
+        #else
+        self
+        #endif
     }
 }
