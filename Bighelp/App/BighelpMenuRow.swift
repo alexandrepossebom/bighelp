@@ -118,22 +118,24 @@ private struct BighelpMenuRowSeparator: ViewModifier {
 }
 
 /// A menu row's layout. The content sits 16 points in from the panel's edge everywhere.
-/// On the Mac that inset is split between the list row and the label, so the hover
-/// highlight (the label's frame plus 4 points) reaches 4 points from the edge, as the
-/// Finder's and Mail's sidebars do, instead of floating 12 points inside.
+/// On the Mac the row keeps 4 points on every side and the label takes the other 12, so the
+/// hover highlight, the label's own frame, sits 4 points inside the panel all around, as the
+/// Finder's and Mail's sidebars do, instead of floating 12 points inside with the first and
+/// last rows' corners cut by the panel's. Elsewhere the highlight is the label grown by 4 points.
 enum BighelpMenuRowLayout {
     static var insets: EdgeInsets {
-        // Mac: 4 above and below too, so the highlight ends at the row's edge instead of
-        // 2 points past it, where the panel's rounded corner cut the first and last rows' highlight.
-        let vertical: CGFloat = BighelpPlatform.isMac ? BighelpTokens.space4 : 2
+        let vertical: CGFloat = BighelpPlatform.isMac ? edgeInset : 2
         return EdgeInsets(top: vertical, leading: edgeInset, bottom: vertical, trailing: edgeInset)
     }
 
-    static var labelInset: CGFloat { BighelpPlatform.isMac ? BighelpTokens.space8 : 0 }
+    static var labelInset: CGFloat { BighelpPlatform.isMac ? BighelpTokens.space12 : 0 }
+
+    /// How far the highlight grows past the label.
+    static var highlightPadding: CGFloat { BighelpPlatform.isMac ? 0 : BighelpTokens.space4 }
 
     static var outline: BighelpPointerOutline {
         .rounded(BighelpPlatform.isMac ? BighelpTokens.radius8 : BighelpTokens.radius12)
     }
 
-    private static var edgeInset: CGFloat { BighelpPlatform.isMac ? BighelpTokens.space8 : BighelpTokens.space16 }
+    private static var edgeInset: CGFloat { BighelpPlatform.isMac ? BighelpTokens.space4 : BighelpTokens.space16 }
 }
