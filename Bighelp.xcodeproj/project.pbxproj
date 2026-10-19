@@ -1235,6 +1235,7 @@
 		C4B3A1697B320312CADBD31C /* ChatSendDuringCatchUpTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A0545349D52A2ACB15D677 /* ChatSendDuringCatchUpTests.swift */; };
 		C4E4798CA8B155A51874FA32 /* SessionAppearanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4BD93B8C1CCC8E538FF081F /* SessionAppearanceView.swift */; };
 		C516FE4CB3D8A2573F8F95D0 /* BighelpRecentAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3339C3838A62B28806B7B8 /* BighelpRecentAlerts.swift */; };
+		C51E78FF26158BE3194F3180 /* BighelpMenuRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3343ABABDB79BADCF447EEF /* BighelpMenuRow.swift */; };
 		C5204B11B341760378224923 /* ChatGlassArchitectureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A676AE9F5121BDE19DA97F9E /* ChatGlassArchitectureTests.swift */; };
 		C5276AA51FAE02FB251A077F /* BighelpLinkProjectGitClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45769F0DA6DB3DBA1A9175F0 /* BighelpLinkProjectGitClient.swift */; };
 		C58B7EF60D58D116ABA172E7 /* DirectHermesChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D04B41D7481AD9B8197BF0 /* DirectHermesChatView.swift */; };
@@ -2929,6 +2930,7 @@
 		C271290F18E5D080853ABFAF /* BighelpPullToRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BighelpPullToRefresh.swift; sourceTree = "<group>"; };
 		C2736E14A6C1285C6665669A /* SkippedPartsNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkippedPartsNote.swift; sourceTree = "<group>"; };
 		C28FC793B551D3283801E600 /* BotModeActivityFixtureClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotModeActivityFixtureClient.swift; sourceTree = "<group>"; };
+		C3343ABABDB79BADCF447EEF /* BighelpMenuRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BighelpMenuRow.swift; sourceTree = "<group>"; };
 		C340AD81178E4864E29F460B /* WebRTC-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WebRTC-LICENSE.txt"; sourceTree = "<group>"; };
 		C380E34BD7BE880470DB9EEB /* HostNotificationSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostNotificationSetup.swift; sourceTree = "<group>"; };
 		C391D786C632E57338EFE988 /* SpatialAvatarPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialAvatarPreview.swift; sourceTree = "<group>"; };
@@ -4004,6 +4006,7 @@
 				EBCE4D0A5B551F3B6980919E /* BighelpMacWindow.swift */,
 				764549B50FCE1851F2CE76A7 /* BighelpMenu.swift */,
 				7BC29ED35D8D397DB63CC944 /* BighelpMenuCommands.swift */,
+				C3343ABABDB79BADCF447EEF /* BighelpMenuRow.swift */,
 				B5D53C2B79F59FC36E3E2ABE /* BighelpPinnedAgentsWidgetFeed.swift */,
 				171EC4C4FCD5B6442AB8A2E0 /* BighelpRuntimeConfiguration.swift */,
 				21D5F1F7073125CA2EC42B19 /* BighelpSessionContentReader.swift */,
@@ -6014,15 +6017,15 @@
 			projectRoot = "";
 			targets = (
 				7CE09B77A448A8E7D15C0A23 /* Bighelp */,
+				C114D08ED479D2C418AD1539 /* BighelpWatch */,
+				7C1FA35F1F84117EC6A80A31 /* BighelpNotificationService */,
 				A66FE6642245F7E09F86421A /* BighelpLiveActivity */,
+				D17D965678E81BFD18979A98 /* BighelpMacUpdater */,
 				2136C8E00479F350BF823226 /* BighelpMac */,
 				21DF24D438EDB555CB66254C /* BighelpMacTests */,
-				D17D965678E81BFD18979A98 /* BighelpMacUpdater */,
-				7C1FA35F1F84117EC6A80A31 /* BighelpNotificationService */,
 				6030931B97EA021016557A7B /* BighelpTests */,
 				A3EAA77788E8D84CF0437C12 /* BighelpUITests */,
 				D6857BF3EF7434B1CC635174 /* BighelpVisionUITests */,
-				C114D08ED479D2C418AD1539 /* BighelpWatch */,
 				31936358D8184A143F70128E /* BighelpWatchUITests */,
 			);
 		};
@@ -6321,6 +6324,7 @@
 				3876660FA2B1883C531993A5 /* BighelpManagedWorkSnapshot.swift in Sources */,
 				99563F5BD1782B4D8522EF6E /* BighelpMenu.swift in Sources */,
 				4BD670B6443A906D374625DF /* BighelpMenuCommands.swift in Sources */,
+				C51E78FF26158BE3194F3180 /* BighelpMenuRow.swift in Sources */,
 				6783EE29885D2E6E26863C22 /* BighelpModelChoiceRow.swift in Sources */,
 				2CF4BECFF04D7DC702A5B071 /* BighelpModelConfirmationModifier.swift in Sources */,
 				B4DF99A4471719B41DE3B4AA /* BighelpModelPickerSheet.swift in Sources */,
