@@ -13,21 +13,24 @@ struct SimpleBotProfileContext {
     let onEditDetails: (AgentProfile) -> Void
     /// The bot's default model and reasoning, where the computer lets the app read and change them.
     var makeModelDefaults: ((String) -> AgentRuntimeDefaultsEditorModel?)? = nil
+    /// The folder the computer shares (Files); nil without a computer.
+    var makeFilesSource: (() -> (any SimpleBotFilesSource)?)? = nil
+    /// Photos and videos from the bot's chats (Media); nil while no computer is connected.
+    var makeMediaClient: (() -> (any AgentMediaClient)?)? = nil
+    /// Nerd Mode shows hidden files (names starting with ".").
+    var showsHiddenFiles = false
 }
 
 /// A bot's profile in Simple Bot mode: its mark, name and role, then Info
-/// (its look, instructions and routines) and Computer (its screen, when the
-/// host has one).
+/// (its look, instructions and routines), Computer (its screen, when the
+/// host has one), Files (its folder on the computer) and Media (photos and
+/// videos from its chats).
 @MainActor
 struct SimpleBotProfileView: View {
     let agentID: String
     let context: SimpleBotProfileContext
 
-    private enum Tab: String, CaseIterable, Identifiable {
-        case info, computer
-        var id: String { rawValue }
-        var title: String { self == .info ? "Info" : "Computer" }
-    }
+    private typealias Tab = SimpleBotProfileTab
 
     @State private var tab: Tab = .info
     @State private var mark: SimpleBotMark?
@@ -37,9 +40,14 @@ struct SimpleBotProfileView: View {
     @State private var newRoutine = false
     @State private var screen: BotScreenTabModel?
     @State private var templateNotice: String?
+    @State private var isSavingTemplate = false
+    @State private var savedTemplateTitle: String?
     @State private var isStudioPresented = false
     @State private var modelDefaults: AgentRuntimeDefaultsEditorModel?
     @State private var isModelPresented = false
+    @State private var files: SimpleBotFilesModel?
+    @State private var media = AgentMediaStore()
+    @State private var isMediaConnected = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appAppearance) private var appearance
     @Environment(\.colorScheme) private var colorScheme
@@ -67,6 +75,15 @@ struct SimpleBotProfileView: View {
         .task(id: agentID) {
             modelDefaults = context.canEdit ? context.makeModelDefaults?(agentID) : nil
             await modelDefaults?.loadIfNeeded()
+        }
+        .task(id: agentID) {
+            // Cheap to make; each tab loads only once it's opened.
+            files = context.makeFilesSource?().map {
+                SimpleBotFilesModel(agentID: agentID, source: $0, showsHidden: context.showsHiddenFiles)
+            }
+            let mediaClient = context.makeMediaClient?()
+            media.configure(client: mediaClient)
+            isMediaConnected = mediaClient != nil
         }
         .task(id: agentID) {
             guard let service = context.screenService else { return }
@@ -114,6 +131,19 @@ struct SimpleBotProfileView: View {
                 .bighelpSheetSize(.standard)
             }
         }
+        .bighelpSheet(isPresented: $isSavingTemplate, onDismiss: {
+            // After the sheet has gone, so the alert can show.
+            guard let title = savedTemplateTitle else { return }
+            savedTemplateTitle = nil
+            templateNotice = "“\(title)” is saved on your computer. Pick it from Templates when you make a new bot."
+        }) {
+            if let profile {
+                SimpleBotSaveTemplateSheet(profile: profile) { savedTemplateTitle = $0.title }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .bighelpSheetSize(.compact)
+            }
+        }
         .alert("Saved as a template", isPresented: Binding(get: { templateNotice != nil },
                                                           set: { if !$0 { templateNotice = nil } })) {
             Button("OK") { templateNotice = nil }
@@ -130,7 +160,7 @@ struct SimpleBotProfileView: View {
             Spacer()
             if let profile {
                 SimpleBotsCircleButton(systemImage: "square.and.arrow.up", label: "Save as Template",
-                                       identifier: "simple-bots.profile.template") { saveTemplate(profile) }
+                                       identifier: "simple-bots.profile.template") { isSavingTemplate = true }
                 Menu {
                     Button("Message", systemImage: "message") { context.onOpenChat(profile.id) }
                     if !isPrimary {
@@ -163,9 +193,11 @@ struct SimpleBotProfileView: View {
                 face(profile)
                 identityCard(profile)
                 tabBar
-                switch tab {
+                switch shownTab {
                 case .info: info(profile)
                 case .computer: computer(profile)
+                case .files: filesTab(profile)
+                case .media: mediaTab(profile)
                 }
             }
             .padding(.horizontal, BighelpTokens.space20)
@@ -211,33 +243,42 @@ struct SimpleBotProfileView: View {
     }
 
     private var availableTabs: [Tab] {
-        screen?.showsTab == true ? Tab.allCases : [.info]
+        Tab.available(showsComputer: screen?.showsTab == true)
+    }
+
+    /// Info when the chosen tab went away (the screen closed).
+    private var shownTab: Tab {
+        availableTabs.contains(tab) ? tab : .info
     }
 
     @ViewBuilder
     private var tabBar: some View {
         if availableTabs.count > 1 {
-            HStack(spacing: BighelpTokens.space24) {
-                ForEach(availableTabs) { item in
-                    Button { tab = item } label: {
-                        VStack(spacing: BighelpTokens.space8) {
-                            Text(item.title)
-                                .font(.bighelp(.body))
-                                .foregroundStyle(tab == item ? theme.primaryText : theme.tertiaryText)
-                            Rectangle()
-                                .fill(tab == item ? theme.primaryText : .clear)
-                                .frame(height: 2)
+            // Scrolls sideways only when large text makes the tabs wider than the screen.
+            ScrollView(.horizontal) {
+                HStack(spacing: BighelpTokens.space24) {
+                    ForEach(availableTabs) { item in
+                        Button { tab = item } label: {
+                            VStack(spacing: BighelpTokens.space8) {
+                                Text(item.title)
+                                    .font(.bighelp(.body))
+                                    .foregroundStyle(shownTab == item ? theme.primaryText : theme.tertiaryText)
+                                Rectangle()
+                                    .fill(shownTab == item ? theme.primaryText : .clear)
+                                    .frame(height: 2)
+                            }
+                            .fixedSize()
+                            .frame(minHeight: BighelpTokens.hitTarget)
+                            .contentShape(.rect)
                         }
-                        .fixedSize()
-                        .frame(minHeight: BighelpTokens.hitTarget)
-                        .contentShape(.rect)
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(shownTab == item ? .isSelected : [])
+                        .accessibilityIdentifier("simple-bots.profile.tab.\(item.rawValue)")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(tab == item ? .isSelected : [])
-                    .accessibilityIdentifier("simple-bots.profile.tab.\(item.rawValue)")
                 }
-                Spacer()
             }
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(theme.separator).frame(height: BighelpTokens.hairline)
             }
@@ -354,6 +395,22 @@ struct SimpleBotProfileView: View {
         }
     }
 
+    @ViewBuilder
+    private func filesTab(_ profile: AgentProfile) -> some View {
+        if let files {
+            SimpleBotFilesTab(model: files, botName: profile.name) { id in
+                context.agents.profiles.first { $0.id == id }?.name ?? "another bot"
+            }
+        } else {
+            SimpleBotsMessageCard(systemImage: "wifi.slash", title: "Your computer isn't connected",
+                                  detail: "\(profile.name)'s files show up here once it's back.")
+        }
+    }
+
+    private func mediaTab(_ profile: AgentProfile) -> some View {
+        SimpleBotMediaTab(agentID: profile.id, botName: profile.name, store: media, isConnected: isMediaConnected)
+    }
+
     /// Shows the pick at once; saves it to the host once picking settles.
     private func pick(_ newMark: SimpleBotMark, for profile: AgentProfile) {
         mark = newMark
@@ -411,10 +468,6 @@ struct SimpleBotProfileView: View {
         return modelID.isEmpty ? "Automatic" : ModelNameCatalog.empty.displayName(for: modelID)
     }
 
-    private func saveTemplate(_ profile: AgentProfile) {
-        let template = AgentTemplateLibrary.shared.save(from: profile)
-        templateNotice = "“\(template.title)” is saved on this device. Pick it when you make a new bot."
-    }
 }
 
 /// A bot's instructions (its SOUL), edited and saved straight to the host.

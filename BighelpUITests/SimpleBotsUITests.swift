@@ -110,6 +110,154 @@ final class SimpleBotsUITests: BighelpUITestCase {
         save("simple-default-model-dark", app)
     }
 
+    /// A bot's profile: Files and Media after Computer. Files opens a folder in place, Back goes up,
+    /// and a file opens in the chat preview; Media shows the bot's photos and videos.
+    @MainActor
+    func testProfileFilesAndMedia() throws {
+        for appearance in ["light", "dark"] {
+            let app = launch(appearance: appearance)
+            let primary = app.buttons["simple-bots.primary"]
+            XCTAssertTrue(primary.waitForExistence(timeout: 15))
+            primary.tap()
+            let identity = app.buttons["chat.identity"]
+            XCTAssertTrue(identity.waitForExistence(timeout: 10))
+            let profile = app.descendants(matching: .any)["simple-bots.profile"]
+            // A tap while the chat is still sliding in can miss; one more is enough.
+            identity.tap()
+            if !profile.waitForExistence(timeout: 5) { identity.tap() }
+            XCTAssertTrue(profile.waitForExistence(timeout: 5))
+            let filesTab = app.buttons["simple-bots.profile.tab.files"]
+            let mediaTab = app.buttons["simple-bots.profile.tab.media"]
+            XCTAssertTrue(filesTab.waitForExistence(timeout: 5))
+            XCTAssertTrue(mediaTab.exists)
+            XCTAssertLessThan(filesTab.frame.minX, mediaTab.frame.minX, "Files, then Media")
+
+            filesTab.tap()
+            let items = app.buttons.matching(identifier: "simple-bots.files.item")
+            XCTAssertTrue(items.firstMatch.waitForExistence(timeout: 10), "The bot's folder lists its files")
+            app.swipeUp()
+            save("simple-files-\(appearance)", app)
+
+            // Markdown reads rendered, as in chats.
+            let notes = items.matching(NSPredicate(format: "label BEGINSWITH 'Notes.md'")).firstMatch
+            XCTAssertTrue(notes.exists)
+            notes.tap()
+            let done = app.buttons["Done"]
+            XCTAssertTrue(done.waitForExistence(timeout: 10), "The file opens in the preview")
+            XCTAssertTrue(app.descendants(matching: .any)["chat.attachment.markdown.mode"].waitForExistence(timeout: 5))
+            save("simple-files-markdown-\(appearance)", app)
+            done.tap()
+
+            let reports = items.matching(NSPredicate(format: "label BEGINSWITH 'Reports'")).firstMatch
+            XCTAssertTrue(reports.waitForExistence(timeout: 5))
+            reports.tap()
+            let up = app.buttons["simple-bots.files.up"]
+            XCTAssertTrue(up.waitForExistence(timeout: 5), "A folder opens in place, with Back above it")
+            save("simple-files-folder-\(appearance)", app)
+
+            let plan = items.matching(NSPredicate(format: "label BEGINSWITH 'Lisbon trip options'")).firstMatch
+            XCTAssertTrue(plan.waitForExistence(timeout: 5))
+            plan.tap()
+            XCTAssertTrue(done.waitForExistence(timeout: 10), "The PDF opens in the preview")
+            sleep(2)
+            save("simple-files-preview-\(appearance)", app)
+            // Quick Look draws out of process, so these screenshots miss it: hold for `simctl io`.
+            if let hold = ProcessInfo.processInfo.environment["BIGHELP_FILES_PREVIEW_HOLD"].flatMap(UInt32.init) {
+                sleep(hold)
+            }
+            done.tap()
+            XCTAssertTrue(up.waitForExistence(timeout: 5))
+            up.tap()
+            XCTAssertTrue(reports.waitForExistence(timeout: 5), "Back goes up to the top folder")
+
+            app.swipeDown()
+            mediaTab.tap()
+            let tile = app.buttons["board.media.item"].firstMatch
+            XCTAssertTrue(tile.waitForExistence(timeout: 10), "Media shows the bot's photos and videos")
+            sleep(1)
+            save("simple-media-\(appearance)", app)
+            tile.tap()
+            XCTAssertTrue(done.waitForExistence(timeout: 10), "A picture opens in the preview")
+            sleep(2)
+            save("simple-media-preview-\(appearance)", app)
+            if let hold = ProcessInfo.processInfo.environment["BIGHELP_FILES_PREVIEW_HOLD"].flatMap(UInt32.init) {
+                sleep(hold)
+            }
+            done.tap()
+            app.terminate()
+        }
+    }
+
+    /// New Bot's Templates: the picker with My Templates on top (the demo computer's saved one, and
+    /// its broken one hidden), a template's fields, the attached chip and taking it off. Then a bot's
+    /// Share: name it, Save, and it's one of My Templates.
+    @MainActor
+    func testTemplatesInNewBotAndSavingABotAsATemplate() throws {
+        for appearance in ["light", "dark"] {
+            let app = launch(appearance: appearance)
+            XCTAssertTrue(app.descendants(matching: .any)["simple-bots.home"].waitForExistence(timeout: 15))
+            app.buttons["simple-bots.new"].tap()
+            app.buttons["New Bot"].tap()
+            let name = app.textFields["simple-bots.create.name"]
+            XCTAssertTrue(name.waitForExistence(timeout: 5))
+            let templates = app.buttons["simple-bots.create.templates"]
+            XCTAssertTrue(templates.waitForExistence(timeout: 5), "Templates sits at the top right")
+            name.tap()
+            name.typeText("Juniper")
+            save("templates-create-\(appearance)", app)
+
+            templates.tap()
+            let mine = app.descendants(matching: .any)["agent.templates.mine"]
+            XCTAssertTrue(mine.waitForExistence(timeout: 10), "My Templates comes first")
+            XCTAssertTrue(app.staticTexts["agent.templates.mine.skipped"].exists, "The broken one is hidden, not the list")
+            let saved = app.buttons["agent.templates.mine-3d2b7c1e-5a4f-4b6d-9e8c-1f2a3b4c5d6e"]
+            XCTAssertTrue(saved.exists)
+            XCTAssertTrue(app.buttons["agent.templates.lens"].exists || app.buttons["agent.templates.anchor"].exists,
+                          "The catalog's templates are still there")
+            save("templates-picker-\(appearance)", app)
+            saved.tap()
+
+            let town = app.textFields["agent.template-form.field.home_town"]
+            XCTAssertTrue(town.waitForExistence(timeout: 10), "Its fill-in fields come first")
+            town.tap()
+            town.typeText("Porto")
+            app.buttons["agent.template-form.continue"].tap()
+            let chip = app.descendants(matching: .any)["simple-bots.create.template"]
+            XCTAssertTrue(chip.waitForExistence(timeout: 5), "The template shows as a chip")
+            XCTAssertEqual(chip.label, "Template: Weekend Planner")
+            XCTAssertTrue(app.staticTexts["simple-bots.create.template-note"].exists)
+            XCTAssertEqual(name.value as? String, "Juniper")
+            save("templates-attached-\(appearance)", app)
+            app.buttons["simple-bots.create.template.remove"].tap()
+            XCTAssertTrue(chip.waitForNonExistence(timeout: 5), "Its x takes it off")
+            XCTAssertFalse(app.staticTexts["simple-bots.create.template-note"].exists)
+            app.buttons["simple-bots.create.close"].tap()
+
+            // A bot's Share saves it as a template on the computer.
+            app.buttons["simple-bots.primary"].tap()
+            let identity = app.buttons["chat.identity"]
+            XCTAssertTrue(identity.waitForExistence(timeout: 10))
+            identity.tap()
+            let share = app.buttons["simple-bots.profile.template"]
+            XCTAssertTrue(share.waitForExistence(timeout: 5))
+            share.tap()
+            let templateName = app.textFields["simple-bots.template.name"]
+            XCTAssertTrue(templateName.waitForExistence(timeout: 5))
+            // The bot's name is filled in; at the end of it, so every delete removes a letter.
+            templateName.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+            if let value = templateName.value as? String, !value.isEmpty {
+                templateName.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: value.count))
+            }
+            templateName.typeText("Budget Buddy")
+            save("templates-share-\(appearance)", app)
+            app.buttons["simple-bots.template.save"].tap()
+            XCTAssertTrue(app.alerts["Saved as a template"].waitForExistence(timeout: 10))
+            save("templates-saved-\(appearance)", app)
+            app.alerts.buttons["OK"].tap()
+            app.terminate()
+        }
+    }
+
     /// A pinned bot joins the primary one in the top row, and goes back to the list when unpinned.
     @MainActor
     func testPinnedBotsJoinTheTopRow() throws {

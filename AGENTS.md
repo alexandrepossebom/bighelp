@@ -54,6 +54,10 @@ change in both repos.
     keyed by `FleetID`): the gateway in use live, the others from the all-hosts copies. Pins live on each
     bot's own gateway; the primary bot is kept on the device (`simpleBotsMultiPrimary`). Acting on another
     gateway's bot goes through `openFleet`; the home stays on screen while that gateway connects.
+  - First run (`FirstRunOnboardingView`) is Welcome, Connect, the optional plugin, notifications (only once the
+    plugin is in), then Choose your mode (`FirstRunMode`: Bots, Sessions, Code). Optional steps have a small Skip;
+    Connect and the mode don't. `FirstRunOnboarding.afterConnectKey` keeps it on screen after host setup's own
+    finish. The mode cards show screenshots (`OnboardingMode*` assets); retake them when those homes change.
   - While every host's data shows (all-hosts view or Multi-gateway), the other hosts stay connected
     (`keepsFleetHostsConnected`), through the background grace too, so opening on one is instant.
 - **Real data only.**
@@ -576,6 +580,10 @@ New code uses Bighelp names. Don't "finish" the rename on this list.
   [services/catalog/docs/TEMPLATE_VARIABLES.md](services/catalog/docs/TEMPLATE_VARIABLES.md).
 - The app's side is `TemplateVariables` (parse, check and fill in one pass) and `AgentTemplateFillView`, the
   short form that opens when someone starts an agent from a template that has fields.
+- My Templates are bots saved as templates on the person's computer (a Simple Bot profile's Share), through the
+  plugin's `my-templates` routes (`native-my-templates-v1`, `MyTemplatesStore`) in the catalog's agent shape. They
+  show first in every template picker, including New Bot's Templates (`SimpleBotCreation`). A saved template
+  that doesn't read is skipped and counted, on the host and in the app, never the whole list.
 
 ### Secrets and access
 
