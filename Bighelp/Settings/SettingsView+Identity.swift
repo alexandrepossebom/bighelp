@@ -35,6 +35,11 @@ extension SettingsView {
                     .onSubmit(saveDisplayName)
                     .accessibilityIdentifier("profile.display-name")
             }
+            // Room above and below the 52-point photo, which the row's own insets don't give;
+            // the photo lines up with the other rows' icon tiles.
+            .padding(.vertical, BighelpTokens.space8)
+            .padding(.horizontal, BighelpMenuRowLayout.labelInset)
+            .bighelpSettingsRowInsets()
             if canSaveDisplayName {
                 Button(action: saveDisplayName) {
                     Text(isRemovingName ? "Remove name" : "Save name")

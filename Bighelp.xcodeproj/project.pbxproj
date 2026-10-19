@@ -414,6 +414,7 @@
 		416563102FA086E0D825F13B /* BighelpCardSurfaceIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC9F6449F300EE8936752D8 /* BighelpCardSurfaceIntegrationTests.swift */; };
 		41A12CA966C498FDBCB3A350 /* VoiceWireModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F5FF17BC71838B082AEF9FC /* VoiceWireModels.swift */; };
 		41ACE12309BB3234648C0010 /* templates-list-v2.json in Resources */ = {isa = PBXBuildFile; fileRef = D59AB812D1C7AB86FCAECE8E /* templates-list-v2.json */; };
+		41F83314C2CE35C83B984C1A /* SimpleBotTimeZonePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEB67FBB2D69C2D2ADC26F4A /* SimpleBotTimeZonePicker.swift */; };
 		420074C32FE85A1A0AF08EBC /* WorkspaceConnectionKeeper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1858799695893DCA414812F /* WorkspaceConnectionKeeper.swift */; };
 		422D06B571DBDD21DCE31AC8 /* DirectHermesPairingClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E705F4D224CB3B48D1C0A8CA /* DirectHermesPairingClient.swift */; };
 		424685DD6558A079DBF15041 /* AgentCompanionAvatarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE52D2EAC2696C43D3604E89 /* AgentCompanionAvatarTests.swift */; };
@@ -800,6 +801,7 @@
 		7F560303F178FB76763F6936 /* HostOperationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 975A91EBDB1C161C5F813C12 /* HostOperationsView.swift */; };
 		7F6FF25E543369775D15F3E3 /* GenerativeUIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C7E590112EC3D9CC152B743 /* GenerativeUIModels.swift */; };
 		7F8F4C1CD762CDFD7FD9E7DA /* ClarificationFallbackFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C82269EEA0CD3C277F0B56 /* ClarificationFallbackFixture.swift */; };
+		7FAE396F71DA60264B402B7E /* SettingsView+Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CFFEC0DBBAF848BB1380A6 /* SettingsView+Menu.swift */; };
 		7FC2595008B1432128346578 /* WorkspaceFolderChooserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040B3A483026B7A85B75ED56 /* WorkspaceFolderChooserTests.swift */; };
 		80287CC55FF68023A99B3CF4 /* BotModeActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79E21E199A5499FA817AA0F /* BotModeActivityStore.swift */; };
 		8080F1A5B7E741E5C92843C2 /* BotScreenControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3053376F9FB2D23BEE2F4D4 /* BotScreenControl.swift */; };
@@ -1834,6 +1836,7 @@
 		112773F6B2779C39B4332F60 /* pin.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = pin.json; sourceTree = "<group>"; };
 		112D329592AC95EB7826923E /* ScheduledTaskPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledTaskPresentationTests.swift; sourceTree = "<group>"; };
 		113548A3FB4DC14DE70D90B3 /* UserIdentityStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserIdentityStoreTests.swift; sourceTree = "<group>"; };
+		11CFFEC0DBBAF848BB1380A6 /* SettingsView+Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+Menu.swift"; sourceTree = "<group>"; };
 		123219BA513DFDB4145C074A /* bighelp-reveal.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "bighelp-reveal.json"; sourceTree = "<group>"; };
 		126BFED069EB3CAD8D3E2464 /* WorkspaceOwner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceOwner.swift; sourceTree = "<group>"; };
 		12962B16DD7F5CFD17BD5DAA /* HostBackupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostBackupView.swift; sourceTree = "<group>"; };
@@ -3278,6 +3281,7 @@
 		FE27AB0155CA339BED16CE90 /* BighelpUsageWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BighelpUsageWidget.swift; sourceTree = "<group>"; };
 		FE827859E3740F1813DE117C /* ChatModel+TurnFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChatModel+TurnFailure.swift"; sourceTree = "<group>"; };
 		FE9007091EA5BB283EA53C1D /* SessionAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAppearanceTests.swift; sourceTree = "<group>"; };
+		FEB67FBB2D69C2D2ADC26F4A /* SimpleBotTimeZonePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleBotTimeZonePicker.swift; sourceTree = "<group>"; };
 		FEB7BBEA44AA0E42DB506FA3 /* DirectHermesWorkspaceFileScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectHermesWorkspaceFileScope.swift; sourceTree = "<group>"; };
 		FEC0FE9520454EA548CB8387 /* bighelp-pull.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "bighelp-pull.json"; sourceTree = "<group>"; };
 		FF0E5E4E7082FD7677EFA222 /* BighelpNotificationServiceCatalyst.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BighelpNotificationServiceCatalyst.entitlements; sourceTree = "<group>"; };
@@ -3789,6 +3793,7 @@
 				89F6727324898A0915DEB6F3 /* SimpleBotsSettingsView.swift */,
 				6F4DD82DEE8EB5910B718623 /* SimpleBotsStyle.swift */,
 				2D3CFECA336C5F41FF704F2B /* SimpleBotTemplates.swift */,
+				FEB67FBB2D69C2D2ADC26F4A /* SimpleBotTimeZonePicker.swift */,
 				E2D043AD3DE1B95D66A8421C /* SimpleBotVoiceBar.swift */,
 			);
 			path = SimpleBots;
@@ -4236,6 +4241,7 @@
 				9720EBAF47E4E42E8C8B48C8 /* SettingsView+Experience.swift */,
 				2311CDD0D0FDF41C4E377226 /* SettingsView+Identity.swift */,
 				C0895D54237F25417076950B /* SettingsView+LocalData.swift */,
+				11CFFEC0DBBAF848BB1380A6 /* SettingsView+Menu.swift */,
 				349405FB47CAF38325298102 /* SettingsView+NerdMode.swift */,
 				3AC85256784649A35E10ADC0 /* SettingsView+Preferences.swift */,
 				1E5BE1CDCC4CE013FCC054B9 /* SystemSettingsPage.swift */,
@@ -6987,6 +6993,7 @@
 				EF39C6AB48360D884BFB5C51 /* SettingsView+Experience.swift in Sources */,
 				C849F9C933C1AECF8591D626 /* SettingsView+Identity.swift in Sources */,
 				2601DB62BFBEE45B1455D6C9 /* SettingsView+LocalData.swift in Sources */,
+				7FAE396F71DA60264B402B7E /* SettingsView+Menu.swift in Sources */,
 				B8EA9206562B0F47DD4C8A74 /* SettingsView+NerdMode.swift in Sources */,
 				19C19469DC9868798E0A0628 /* SettingsView+Preferences.swift in Sources */,
 				F735172F333A193C2B4FDF30 /* SettingsView.swift in Sources */,
@@ -6999,6 +7006,7 @@
 				1CBBCA37E4825CA82FAB683F /* SimpleBotProfileExtras.swift in Sources */,
 				842B5E01AA01D87DE0AD45A9 /* SimpleBotProfileView.swift in Sources */,
 				10006BC271D7C92540B570B2 /* SimpleBotTemplates.swift in Sources */,
+				41F83314C2CE35C83B984C1A /* SimpleBotTimeZonePicker.swift in Sources */,
 				4F4BFD5D7FE39BBA056987FA /* SimpleBotVoiceBar.swift in Sources */,
 				9439485E2A2FA9EC2B7ED47F /* SimpleBotsHomeView.swift in Sources */,
 				78269EBC10C58BA4BFDAB67B /* SimpleBotsSearchView.swift in Sources */,
