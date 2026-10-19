@@ -57,6 +57,7 @@ extension NativeWorkspaceSessionBridge {
         }
         activeMappings = refreshedMappings
 
+        var resumesRetainedStreams = false
         let remoteIDs = Set(records.map(\.id))
         var merged = records
         for (id, stream) in streams where stream.owner == owner
@@ -99,10 +100,15 @@ extension NativeWorkspaceSessionBridge {
                     && $0.visibleID == id
                     && DirectHermesSessionValidation.same($0.runtimeID, stream.client.runtimeID)
             }) == true else {
-                streams[id] = nil
-                unbindPromptSession(stream, visibleSessionID: id)
-                onSessionRetired?(id)
+                // Hermes still lists the chat, but its runtime ended: Hermes reaps the runtime of a chat
+                // whose app was away a while (`ws_orphan_reap`). The chat stays as it is and resumes;
+                // retiring it pulled an open chat from under the person ("Route unavailable").
                 stream.client.suspend()
+                stream.requiresResumeAfterTransportReconnect = true
+                stream.retainIfOmitted = false
+                if let record { stream.record = record }
+                streams[id] = stream
+                resumesRetainedStreams = true
                 continue
             }
             // Once Hermes exposes the durable row, the remote catalog is the
@@ -181,12 +187,21 @@ extension NativeWorkspaceSessionBridge {
             // returns the durable row in a later authoritative list.
             merged.append(stream.record)
         }
+        if resumesRetainedStreams { onRetainedStreamsNeedResume?() }
         return merged
     }
 
     func canonicalToolCallIDs(for record: SessionRecord) -> Set<String> {
         guard !retired, connections.owner?.authority == authority else { return [] }
         return (try? box.value())?.canonicalToolCallIDs(for: record) ?? []
+    }
+
+    func archivedChats() async throws -> [SessionArchivedChat] {
+        try await box.value().archivedChats()
+    }
+
+    func restoreArchivedChat(_ chat: SessionArchivedChat) async throws {
+        try await box.value().restoreArchivedChat(chat)
     }
 
     func refreshMetadata(_ record: SessionRecord) async throws -> SessionRecord? {
@@ -337,6 +352,7 @@ extension NativeWorkspaceSessionBridge {
         let catalog = try box.value()
         var options = DirectHermesSessionListOptions()
         options.archived = .include
+        options.keepsDeliberatelyArchived = true
         let records = try await catalog.list(options: options)
         guard !retired, connections.owner == owner else {
             throw WorkspaceClientError.ownerChanged

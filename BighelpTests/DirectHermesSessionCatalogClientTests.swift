@@ -1191,6 +1191,65 @@ struct DirectHermesSessionCatalogClientTests {
         #expect(deleted.mayRetainOtherHistory)
     }
 
+    /// Hermes hides every Bot Chat, so its session list never has one. The agent list names it
+    /// (`canonical_session`): each refresh keeps it, rather than dropping the agent's chat from the app.
+    @Test func everyRefreshKeepsTheAgentsHiddenBotChat() async throws {
+        let workspace = try SessionWorkspaceStub()
+        workspace.handler = { operation, _ in
+            switch operation {
+            case .profilesList: return Self.profiles(canonical: "bot-chat")
+            case .sessionsList: return Self.ownershipPage([Self.session(id: "other")])
+            default: throw WorkspaceClientError.invalidRequest
+            }
+        }
+        let client = Self.client(workspace)
+        for _ in 0..<2 {
+            let records = try await client.list()
+            let botChat = try #require(records.first { $0.remoteStoredID == "bot-chat" })
+            #expect(botChat.isBotChat)
+            #expect(botChat.agentIDs == ["alpha"])
+            #expect(records.contains { $0.remoteStoredID == "other" })
+        }
+    }
+
+    /// Hermes' idle sweep (`sessions.auto_archive`) archives chats nobody touched for days; they stay in the
+    /// lists. A chat someone archived waits in Archived Chats, which restores it.
+    @Test func idleSweptChatsStayListedAndArchivedOnesWaitInArchivedChats() async throws {
+        @MainActor final class Updates { var payloads: [[String: BighelpJSONValue]] = [] }
+        let updates = Updates()
+        var swept = try #require(Self.session(id: "swept").object)
+        swept["archived"] = .boolean(true)
+        swept["auto_archived"] = .integer(1)
+        var archived = try #require(Self.session(id: "taco-order").object)
+        archived["archived"] = .boolean(true)
+        archived["auto_archived"] = .integer(0)
+        archived["source"] = .string("imsg")
+        let workspace = try SessionWorkspaceStub()
+        workspace.handler = { operation, payload in
+            switch operation {
+            case .profilesList: return Self.profiles()
+            case .sessionsList:
+                if payload["archived"] == .string("only") {
+                    return Self.ownershipPage([.object(archived), .object(swept)])
+                }
+                #expect(payload["archived"] == .string("include"))
+                return Self.ownershipPage([Self.session(id: "plain"), .object(swept), .object(archived)])
+            case .sessionUpdate:
+                updates.payloads.append(payload)
+                return ["ok": .boolean(true)]
+            default: throw WorkspaceClientError.invalidRequest
+            }
+        }
+        let client = Self.client(workspace)
+        #expect(try await client.list().compactMap(\.remoteStoredID).sorted() == ["plain", "swept"])
+        let chats = try await client.archivedChats()
+        #expect(chats.map(\.storedID) == ["taco-order"])
+        #expect(SessionOrigin.label(chats.first?.source) == "iMessage")
+        try await client.restoreArchivedChat(try #require(chats.first))
+        #expect(updates.payloads.first?["archived"] == .boolean(false))
+        #expect(updates.payloads.first?["session_id"] == .string("taco-order"))
+    }
+
     @Test func canonicalPinUsesRegistryIdentity() async throws {
         let workspace = try SessionWorkspaceStub()
         workspace.handler = { operation, payload in
