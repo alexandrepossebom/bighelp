@@ -99,8 +99,8 @@ struct BighelpMenuChatRow: View {
 }
 
 extension View {
-    /// Mac: a menu row's separator runs the row's full width in the theme's line color.
-    /// Inset to the text and in the hover highlight's gray, it merged with the
+    /// Mac: a menu row's separator spans the row, as wide as the hover highlight, in the
+    /// theme's line color. Inset to the text and in the highlight's gray, it merged with the
     /// highlight into a stepped edge. Elsewhere the row keeps the list's separator.
     func bighelpMenuRowSeparator() -> some View {
         modifier(BighelpMenuRowSeparator())
@@ -111,9 +111,15 @@ private struct BighelpMenuRowSeparator: ViewModifier {
     @BighelpThemeReader private var theme
 
     func body(content: Content) -> some View {
+        #if targetEnvironment(macCatalyst)
+        // Both ends: the trailing one otherwise stops at the list's own 16-point margin.
         content
-            .alignmentGuide(.listRowSeparatorLeading) { $0[BighelpPlatform.isMac ? .leading : .listRowSeparatorLeading] }
-            .listRowSeparatorTint(BighelpPlatform.isMac ? theme.separator : nil)
+            .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+            .alignmentGuide(.listRowSeparatorTrailing) { $0[.trailing] }
+            .listRowSeparatorTint(theme.separator)
+        #else
+        content
+        #endif
     }
 }
 
