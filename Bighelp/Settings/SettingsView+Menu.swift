@@ -47,7 +47,7 @@ extension SettingsView {
                 }
             }
             Spacer(minLength: BighelpTokens.space8)
-            if BighelpPlatform.isMac {
+            if BighelpPlatform.drawsOwnLinkChevron {
                 // The List's own chevron is hidden on the Mac (`bighelpSettingsLink`).
                 Image(systemName: "chevron.right")
                     .font(.bighelp(.footnote).weight(.semibold))

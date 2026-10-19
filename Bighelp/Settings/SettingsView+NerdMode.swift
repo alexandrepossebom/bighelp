@@ -147,15 +147,12 @@ extension View {
     /// A Settings row that is a `NavigationLink`: the link keeps its own style (a button style
     /// doesn't reach it), so the Mac's hover goes on its label with `bighelpSettingsLinkLabel`.
     /// On the Mac the List's own chevron, outside the row, gives way to the label's, in line
-    /// with the button rows'.
+    /// with the button rows' (`BighelpPlatform.drawsOwnLinkChevron`).
     @ViewBuilder
     func bighelpSettingsLink() -> some View {
         #if targetEnvironment(macCatalyst) && compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            bighelpSettingsRowInsets().navigationLinkIndicatorVisibility(.hidden)
-        } else {
-            bighelpSettingsRowInsets()
-        }
+        // In the iOS 26 SDK; available from Catalyst 17, so no runtime check.
+        bighelpSettingsRowInsets().navigationLinkIndicatorVisibility(.hidden)
         #else
         bighelpSettingsRowInsets()
         #endif
