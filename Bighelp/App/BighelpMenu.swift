@@ -432,4 +432,3 @@ private struct BighelpMenuDot: ViewModifier {
 
     @BighelpThemeReader private var theme
 }
-
