@@ -2094,13 +2094,6 @@ final class DirectHermesSessionCatalogClient: SessionCatalogClient {
 
     /// Whether `/api/sessions` has another page. Hermes 0.21.x sends no `has_more` and adds
     /// pinned sessions past the limit, so the row count can't tell; `total` can.
-    static func pageHasMore(_ page: [String: BighelpJSONValue], offset: Int, rows: Int) -> Bool {
-        if let hasMore = page["has_more"]?.boolean { return hasMore }
-        let limit = page["limit"]?.integer ?? 100
-        if let total = page["total"]?.integer { return offset + limit < total }
-        return rows >= limit
-    }
-
     private func refreshedCatalogCoordinate(for binding: Binding) async throws -> DirectHermesCatalogCoordinate {
         let profile = try await requireProfile(binding.coordinate.profileID)
         var offset = 0
@@ -2284,16 +2277,5 @@ final class DirectHermesSessionCatalogClient: SessionCatalogClient {
         guard let sink = onCreationStateChange else { throw DirectHermesSessionError.creationPersistenceRequired }
         try sink(state)
         try requireOwner()
-    }
-
-    private func validate(_ options: DirectHermesSessionListOptions) throws {
-        guard options.sources.count <= 32, options.excludedSources.count <= 32 else {
-            throw WorkspaceClientError.invalidRequest
-        }
-        for source in options.sources + options.excludedSources {
-            try DirectHermesSessionValidation.coordinate(source, maximum: 128)
-            guard !source.contains(",") else { throw WorkspaceClientError.invalidRequest }
-        }
-        if let path = options.cwdPrefix { try DirectHermesSessionValidation.hostPath(path) }
     }
 }

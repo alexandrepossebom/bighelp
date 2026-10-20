@@ -1144,6 +1144,7 @@
 		B3D4DF884C078EB77DB8E725 /* SettingsPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA29847ABB2B6CF61029A960 /* SettingsPresentation.swift */; };
 		B3D5470D4B9EA03AE60883D5 /* DirectHermesNetworking.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA289C3474766DAA42835F53 /* DirectHermesNetworking.swift */; };
 		B3EC5789602FB904AEA7AF78 /* SubagentControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B7397F7D4D61EB688CC8B4 /* SubagentControlTests.swift */; };
+		B3F1B21B8C3D26A5E0FDEEE5 /* DirectHermesSessionCatalogClient+ListRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8FE80355509F8B363965132 /* DirectHermesSessionCatalogClient+ListRequest.swift */; };
 		B3F9F117624746C5AF0CEC6B /* ChatToolPhrase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D4F8D182EE30C5C7CDB870 /* ChatToolPhrase.swift */; };
 		B44B30DBBAFA2B7EDB45621A /* SimpleBotsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F0FDE4E094EF1BBFD3E82DD /* SimpleBotsUITests.swift */; };
 		B46FB0AC1F4E70E1C70B859E /* RichDraftMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A37E1D59199BAE6514567D0 /* RichDraftMarkdown.swift */; };
@@ -2909,6 +2910,7 @@
 		B81E4D55F5AC3C4CBA3A8728 /* ChatTurnFailureCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTurnFailureCard.swift; sourceTree = "<group>"; };
 		B8439FC19E8957B01F36C2F3 /* HostToolBackendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostToolBackendsView.swift; sourceTree = "<group>"; };
 		B85E99EAB6136CE00D0E00B2 /* VerifiedHostConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerifiedHostConnection.swift; sourceTree = "<group>"; };
+		B8FE80355509F8B363965132 /* DirectHermesSessionCatalogClient+ListRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DirectHermesSessionCatalogClient+ListRequest.swift"; sourceTree = "<group>"; };
 		B91881A6573A7A65075C53EE /* BighelpApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BighelpApp.swift; sourceTree = "<group>"; };
 		B91ABB8C2C1BF7387E5890E0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B92A64B932A98ACC81A60866 /* HermesShapeFace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HermesShapeFace.swift; sourceTree = "<group>"; };
@@ -3994,6 +3996,7 @@
 			children = (
 				84CDFB716339C824778C9944 /* DirectHermesHistoryProjection.swift */,
 				88F61A12D0FC40F0F5266884 /* DirectHermesSessionCatalogClient.swift */,
+				B8FE80355509F8B363965132 /* DirectHermesSessionCatalogClient+ListRequest.swift */,
 				0C67013EC7364A1D387E5C93 /* DirectHermesSessionModels.swift */,
 				0B2B706F0F95D18D12795BAB /* HermesAgentMetadata.swift */,
 				6D903B6D24C041C30F119F48 /* HermesUserMessageDisplay.swift */,
@@ -6080,15 +6083,15 @@
 			projectRoot = "";
 			targets = (
 				7CE09B77A448A8E7D15C0A23 /* Bighelp */,
+				C114D08ED479D2C418AD1539 /* BighelpWatch */,
+				7C1FA35F1F84117EC6A80A31 /* BighelpNotificationService */,
 				A66FE6642245F7E09F86421A /* BighelpLiveActivity */,
+				D17D965678E81BFD18979A98 /* BighelpMacUpdater */,
 				2136C8E00479F350BF823226 /* BighelpMac */,
 				21DF24D438EDB555CB66254C /* BighelpMacTests */,
-				D17D965678E81BFD18979A98 /* BighelpMacUpdater */,
-				7C1FA35F1F84117EC6A80A31 /* BighelpNotificationService */,
 				6030931B97EA021016557A7B /* BighelpTests */,
 				A3EAA77788E8D84CF0437C12 /* BighelpUITests */,
 				D6857BF3EF7434B1CC635174 /* BighelpVisionUITests */,
-				C114D08ED479D2C418AD1539 /* BighelpWatch */,
 				31936358D8184A143F70128E /* BighelpWatchUITests */,
 			);
 		};
@@ -6742,6 +6745,7 @@
 				F30B941F7E77DBB38B2F3259 /* DirectHermesScheduledTasksClient.swift in Sources */,
 				DD61C441D36A3F8F10E2A3CE /* DirectHermesSecurePrompt.swift in Sources */,
 				C1973F8CC1722D86D562D98F /* DirectHermesSessionActions.swift in Sources */,
+				B3F1B21B8C3D26A5E0FDEEE5 /* DirectHermesSessionCatalogClient+ListRequest.swift in Sources */,
 				28972E92CEE5EBF751BDCFDB /* DirectHermesSessionCatalogClient.swift in Sources */,
 				3DBB149E1CF4F1E5161D4037 /* DirectHermesSessionControlClient.swift in Sources */,
 				CDBAEF0147205371BC9A96DC /* DirectHermesSessionMaintenanceClient.swift in Sources */,
