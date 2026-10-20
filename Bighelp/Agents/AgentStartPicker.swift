@@ -27,12 +27,13 @@ struct AgentStartPicker: View {
     let model: AgentEditorModel
     @Bindable var library: AgentTemplateLibrary
     var myTemplates: MyTemplatesStore = .shared
+    /// Opens Browse all. The editor presents it from its form's root: this picker sits in a
+    /// section header, and a sheet hung there never gets the keyboard for its search.
+    let onBrowse: () -> Void
     @State private var renaming: SavedAgentTemplate?
     @State private var renameText = ""
-    @State private var isBrowsingTemplates = false
-    /// Picked in Browse all; applied once that sheet has closed, since a template's form opens as
-    /// a sheet of its own.
-    @State private var browsedTemplate: AgentSoulTemplate?
+    /// The topic chip over the Templates rail.
+    @State private var railFilter = TemplateTopicFilter.all
 
     var body: some View {
         VStack(alignment: .leading, spacing: BighelpTokens.space12) {
@@ -49,8 +50,15 @@ struct AgentStartPicker: View {
             case .scratch:
                 note("Empty details. Write your agent's personality yourself in Instructions.")
             case .builtIn:
+                let catalog = AgentSoulTemplate.all
+                let topics = TemplateTopics.sections(catalog, topics: TemplateCategory.agentTopics, category: \.category)
+                    .compactMap(\.category)
+                if topics.count > 1 {
+                    TemplateTopicChips(filters: [.all] + topics.map { .topic($0) }, selection: $railFilter,
+                                       identifier: "agent.editor.templates", inset: 0)
+                }
                 carousel {
-                    ForEach(AgentSoulTemplate.all) { template in
+                    ForEach(railTemplates(catalog)) { template in
                         card(title: template.title, subtitle: template.cardRole, detail: template.cardStrength,
                              credit: template.isCommunity ? template.credit : nil,
                              systemImage: template.systemImage, selected: "builtin:\(template.id)",
@@ -64,9 +72,7 @@ struct AgentStartPicker: View {
                      ? "Its personality is in Instructions below, with your agent's name filled in."
                      : "Each is a full personality. Pick one, then give your agent its name.")
                 HStack {
-                    Button {
-                        isBrowsingTemplates = true
-                    } label: {
+                    Button(action: onBrowse) {
                         Label("Browse all \(AgentSoulTemplate.all.count)", systemImage: "square.grid.2x2")
                             .font(.bighelp(.footnote).weight(.semibold))
                     }
@@ -126,14 +132,6 @@ struct AgentStartPicker: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .task { await myTemplates.refresh() }
-        .bighelpSheet(isPresented: $isBrowsingTemplates, onDismiss: {
-            guard let browsedTemplate else { return }
-            self.browsedTemplate = nil
-            pick(browsedTemplate)
-        }) {
-            AgentTemplateBrowser { browsedTemplate = $0 }
-                .bighelpSheetSize(.large)
-        }
         .alert("Rename template", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Name", text: $renameText)
             Button("Cancel", role: .cancel) { renaming = nil }
@@ -144,7 +142,19 @@ struct AgentStartPicker: View {
         }
     }
 
+    /// The rail keeps the catalog's order; a topic chip narrows it to that topic.
+    private func railTemplates(_ catalog: [AgentSoulTemplate]) -> [AgentSoulTemplate] {
+        guard case .topic(let topic) = railFilter else { return catalog }
+        let shown = catalog.filter { $0.category == topic }
+        return shown.isEmpty ? catalog : shown
+    }
+
     private func pick(_ template: AgentSoulTemplate) {
+        Self.pick(template, into: model)
+    }
+
+    /// Fills the editor from a template and counts it toward Most used.
+    static func pick(_ template: AgentSoulTemplate, into model: AgentEditorModel) {
         TemplateUsage.shared.recordUse(AgentTemplateBrowsing.usageID(template))
         model.startFrom(template)
     }
