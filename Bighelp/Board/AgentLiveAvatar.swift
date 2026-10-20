@@ -227,39 +227,50 @@ struct AgentHeroHeader: View {
                 if !showsName { Button("Switch agent", action: onNameTap) }
             }
             if showsName || statusLine != nil {
+            ZStack(alignment: .top) {
+            // The chat's top inset is this header's height: room for a status line keeps
+            // the messages still while "Updating…" or an activity comes and goes.
+            if showsName {
+                namePillLabel(line: "Updating…").hidden()
+            }
             Button(action: onNameTap) {
-                VStack(spacing: 1) {
-                    if showsName {
-                        Text(displayName)
-                            .font(.bighelp(.subheadline).weight(.semibold))
-                            .foregroundStyle(theme.primaryText)
-                            .lineLimit(1)
-                    }
-                    if let line = statusLine {
-                        Text(line)
-                            .font(.bighelp(.caption2).weight(.medium))
-                            .foregroundStyle(theme.secondaryText)
-                            .lineLimit(1)
-                            .transition(.opacity)
-                    }
-                }
-                .padding(.horizontal, BighelpTokens.space16)
-                .padding(.vertical, 6)
-                .frame(minHeight: 34)
-                .contentShape(.capsule)
-                .bighelpNavigationGlass(in: Capsule(), isInteractive: true)
+                namePillLabel(line: statusLine)
+                    .contentShape(.capsule)
+                    .bighelpNavigationGlass(in: Capsule(), isInteractive: true)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(displayName)
             .accessibilityValue(statusLine ?? "")
             .accessibilityHint("Switch agents or open a group chat.")
             .accessibilityIdentifier("agent.hero.name")
+            }
             .transition(.opacity)
             }
         }
         .animation(.snappy, value: activity)
         .animation(.snappy, value: status)
         .animation(.snappy, value: avatarSize)
+    }
+
+    private func namePillLabel(line: String?) -> some View {
+        VStack(spacing: 1) {
+            if showsName {
+                Text(displayName)
+                    .font(.bighelp(.subheadline).weight(.semibold))
+                    .foregroundStyle(theme.primaryText)
+                    .lineLimit(1)
+            }
+            if let line {
+                Text(line)
+                    .font(.bighelp(.caption2).weight(.medium))
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(1)
+                    .transition(.opacity)
+            }
+        }
+        .padding(.horizontal, BighelpTokens.space16)
+        .padding(.vertical, 6)
+        .frame(minHeight: 34)
     }
 
     private var statusLine: String? {
