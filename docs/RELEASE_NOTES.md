@@ -3,6 +3,64 @@
 These notes tell people what is new in each bighelp release. They use ASD-STE100 Simplified Technical English:
 short sentences, one instruction in each step, and the active voice.
 
+## 2.6.2
+
+This release shows templates by category and puts the reasoning of a bot into one folder.
+
+### Templates by category
+
+The template lists now show the templates in groups by category. This applies to Agent Studio, **Browse all**,
+**New Bot** › **Templates** in Simple Bot mode, and the **Blueprints** of Feed, Ideas and Goals.
+
+- Type in the search field to find a template.
+- Tap a category chip to show only that category. Tap it again to show all.
+- Your own templates (**My Templates**) show first.
+- Use the **Sort** button to sort by **For you**, **Newest** or **Most used**.
+
+### Reasoning in one folder
+
+In Simple Bot mode, with **Show reasoning** on, the notes that a bot writes before its answer are in one folder.
+
+- The folder is open while the bot works.
+- When the bot answers, the folder closes in the same place.
+- Tap the folder to open it or close it at any time.
+
+## 2.6.1
+
+This release adds an optional chat title and error codes for notification setup. It also fixes problems with
+Chat Info, bots on other computers, new Bot Chats, Composio Apps, phone tools, and the Mac app.
+
+### Show the title of the chat
+
+You can show the title of the chat under the name of the agent. This setting is off by default.
+
+1. Open **Settings**.
+2. Select **Chat**.
+3. Turn on **Session title**.
+
+### Error codes for notification setup
+
+If notification setup stops, the app shows a short code (for example **NS-102**) and a message that tells you what
+to do. Select **Copy Details** to copy the code and the step. Send them to us when you ask for help. The details
+do not include addresses, names or keys.
+
+### Fixes
+
+- **Chat Info:** You can open Chat Info from every chat again. Select **⋯**, then **This chat**, then
+  **Chat info**.
+- **Bots on other computers:** In Simple Bot mode with **Multi-gateway** on, a bot on another computer opens with a
+  loading animation. Select **Cancel** to stop. If the other computer does not answer in 20 seconds, the app goes
+  back to the computer that you used before and tells you.
+- **New Bot Chats:** If the connection stops while the app makes the first Bot Chat of an agent, the app tries
+  again. You can always start new chats with that agent.
+- **Composio Apps:** The app tests that your agent can reach Composio before it shows "can use these apps". If the
+  test fails, select **Sign in for my agent**. Use your Composio apps in a new chat. A chat that was open before you
+  turned on Composio does not get them.
+- **Phone tools:** The app connects the phone tools only in chats with the agent that has the bighelp plugin.
+  **Settings** › **Permissions** tells you which agent that is.
+- **Mac:** The ☰ menu and the Settings rows show a highlight under the pointer. Settings uses switches. Sheets do
+  not show a drag bar.
+
 ## 2.6.0
 
 This release makes the first setup easier and adds a new reaction bar, bot templates, and Files and Media for

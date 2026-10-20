@@ -53,7 +53,9 @@ change in both repos.
     (`simpleBotsMultiGateway`) lists every gateway's bots (`SimpleBotsGateways`, one `SimpleBotsBot` model
     keyed by `FleetID`): the gateway in use live, the others from the all-hosts copies. Pins live on each
     bot's own gateway; the primary bot is kept on the device (`simpleBotsMultiPrimary`). Acting on another
-    gateway's bot goes through `openFleet`; the home stays on screen while that gateway connects.
+    gateway's bot goes through `openFleet`; the home stays under the Noodle loader (`SimpleBotsOpeningOverlay`,
+    with Cancel) until the bot opens. A computer that doesn't answer gives the selection back to the one the tap
+    came from (`FleetSwitchFallback`), so neither the app nor its next launch is left on it.
   - First run (`FirstRunOnboardingView`) is Welcome, Connect, the optional plugin, notifications (only once the
     plugin is in), then Choose your mode (`FirstRunMode`: Bots, Sessions, Code). Optional steps have a small Skip;
     Connect and the mode don't. `FirstRunOnboarding.afterConnectKey` keeps it on screen after host setup's own
@@ -168,6 +170,10 @@ change in both repos.
   people, a note on each message that only the model sees. The wait is capped (1.2 s), so a slow host sends the
   message without a name. `UserIdentity.name` is empty until someone saves one; "You" is an on-screen placeholder
   (`displayName`) and must never be sent. Names are at most 40 characters.
+- **A lost create never locks an agent out:** every `session.create` sends the creation record's `intentID` as
+  `idempotency_key` (Hermes keeps it 5 minutes and answers a retry with the same session). An unfinished first Bot
+  Chat retries under that key, or resumes the session Hermes made and asks for its title again; it never blocks
+  New Chat (#440).
 - **A turn stays pending while it streams:** after `prompt.submit` returns `streaming`, the chat isn't "ready for a
   new turn" until the turn ends. A mid-turn Send must go through the steer/queue path (`sendMidSession`). Steer is
   the default.
@@ -513,12 +519,18 @@ Helpful, never a pile to clear (`BighelpNotificationGrouping`):
   name) and keeps the chat in `loopdy.sessionReference`, which the "chat on screen" check reads.
 - A newer reply for a chat removes that chat's earlier replies; questions and approvals stay until dealt with.
 - Helper (subagent) results arrive passive: Notification Center only, no banner or sound.
+- A scheduled task's alert opens the chat where its job was made, else the job in Scheduled tasks
+  (`BighelpScheduledAlertLinks`). The plugin names them `scheduled.chat.<session>` and `scheduled.job.<job>`, only
+  for phones that send `scheduledLinks` in their preferences; never a chat's own reference, because the run's text
+  isn't in that chat. Scheduled alerts never replace each other.
 - Opening a chat, or returning to the app on one, clears its delivered alerts (`BighelpVisibleChats`).
 - One Live Activity at a time: a new chat's card replaces the older one (`BighelpManagedNativeActivityRuntime`).
   Finished cards leave the Lock Screen about 30 seconds after the end (the Link service sends a dismissal date),
   and opening the app clears any still there.
 - The Live Activity uses the app's palette from the widget snapshot, like the Home widgets. Its four steps come from
   the phase Hermes reports, never a guessed percentage.
+- Every setup failure gets its own code where it happens (`BighelpNotificationErrorCode`, never reused or renumbered);
+  the FAQ is [docs/NOTIFICATION_ERROR_CODES.md](docs/NOTIFICATION_ERROR_CODES.md).
 
 ### Names that must stay "loopdy"
 
@@ -584,6 +596,10 @@ New code uses Bighelp names. Don't "finish" the rename on this list.
   [services/catalog/docs/TEMPLATE_VARIABLES.md](services/catalog/docs/TEMPLATE_VARIABLES.md).
 - The app's side is `TemplateVariables` (parse, check and fill in one pass) and `AgentTemplateFillView`, the
   short form that opens when someone starts an agent from a template that has fields.
+- Pickers group templates and blueprints by the catalog's `category` (`TemplateCategory`: the ten agent topics
+  and five blueprint topics, in a fixed order; unknown or missing is Other). They share the search row, topic
+  chips, section headers and Sort (`TemplatePickerParts.swift`) and one listing (`TemplateTopics.listing`). A new
+  catalog topic needs an app build to get its own name; until then it shows under Other.
 - My Templates are bots saved as templates on the person's computer (a Simple Bot profile's Share), through the
   plugin's `my-templates` routes (`native-my-templates-v1`, `MyTemplatesStore`) in the catalog's agent shape. They
   show first in every template picker, including New Bot's Templates (`SimpleBotCreation`). A saved template

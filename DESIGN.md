@@ -83,8 +83,9 @@ is covered. Tap for a compact pill, touch and hold to open the chat. Settings �
 turns it off. Outside the app the Live Activity shows the agent's picture and the same icon (the plugin sends only
 a fixed category). Every phone chat uses this big-avatar header and keeps the tab bar under its message box (All
 agents' chats excepted). Every chat has ☰ in the top left, like the other root screens; a chat opened from the
-list, Agents, Feed or a task goes back to it with the edge swipe. Chat Info lives in ⋯ › People & Chat, and the line under
-the name says "Updating…" while a chat reloads from Hermes. iPad works the same way, with no always-open sidebar:
+list, Agents, Feed or a task goes back to it with the edge swipe. A group chat's name opens its Chat Info. The line under
+the name says "Updating…" while a chat reloads from Hermes, the agent's activity while it works, and otherwise the
+chat's title when Settings › Chat › Session title is on (off by default; never "New chat" or "Bot Chat"). iPad works the same way, with no always-open sidebar:
 ☰ slides the menu in from the leading edge, and chats use the width of the screen. On Vision Pro bighelp always
 starts in its own window. The tabs sit in a strip beside the window (`VisionTabOrnament`), clear of the system's
 move and close controls under it; ☰ opens the menu as a column inside the window and the page beside it narrows
@@ -180,6 +181,13 @@ posts (plugin 2.19.0).
 **Blueprints** (beside the page title, and in the empty state) are the 45 starter prompts from
 bighelp.app/quick-start, bundled (`BoardBlueprints.json`), 15 per page in five topics. A tap opens a new chat
 with that agent and the prompt in the message box to fill in its [brackets]; nothing runs until Send.
+Every template picker (Blueprints, Agents' Browse all, New Bot's Templates) is one list by topic: the search row,
+topic chips under it (All, My Templates when there are some, then each topic that has templates, with its icon), a
+section per topic with its icon and count, and Sort in the top bar (For you; Newest and Most used rank everything
+in one list; bighelp only when the catalog has community ones). My Templates come first. Topics are the catalog's
+`category` with fixed names and order (`TemplateCategory`); one the app doesn't know is Other, never hidden. New
+agent's Templates rail has the same chips over it. A search that finds nothing says so, with Search all when a
+chip narrowed it.
 **Goals** shows Tracking (the active goals by category: Health, Relationships, Finance, Career, Interests,
 Productivity, Other; "Nothing is being tracked yet" when empty), Done, then **Create a goal**: one row per
 category with a +, which starts a chat asking the agent to plan a goal in that category (touch and hold for that
@@ -386,7 +394,10 @@ text is SF Pro, as everywhere.
 - **Chat**: Back, the bot's name (its profile) and ⋯; no New chat button. Voice is a bar over the chat, under
   its header (`SimpleBotVoiceBar`), and the chat stays in use: the bot's face, a visualizer from the real audio
   levels (your voice in the page's ink, the bot's in its color, dots while nobody speaks), voice choices (live
-  or TTS, the bot's voice on or off), the microphone and End.
+  or TTS, the bot's voice on or off), the microphone and End. With Show reasoning on, the notes the bot writes
+  on the way to its answer go into one "{Bot}'s reasoning" folder (`ChatInterimReasoningHeader`): open while the
+  bot works, closed in place when the turn ends, and a tap opens or closes it any time. It never becomes a
+  second folder; the answer always shows.
 - **Swipes**: from the left edge back to your bots; from the right, this bot's profile (the primary bot's on
   the home). The full app's swipe choices lead to places this mode hides, so they don't apply here.
 - **Profile**: the mark, name and role, then Info (Character, Instructions, Default Model, Routines) and

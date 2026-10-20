@@ -77,6 +77,25 @@ The plugin constructs context from the verified Link frame's phone ID and
 phone epoch, with the authenticated host ID as an attribute and profile as
 scope. Phone and host authorization epochs are independent.
 
+Only the agent the plugin serves has the phone tools: `servingProfileId` in
+`/native/context`, usually `default`. Hermes loads a profile's plugins only into
+that profile's agents, and the plugin refuses a channel for any other agent
+(`profile_not_served`). So the phone opens a channel only while that agent's
+chat is open (`NativeDeviceToolSession.servingAgentID`). Another agent's chat
+sends nothing after the context check, and Device access names the agent that
+can use the shared data.
+
+One chat has one phone. The plugin refuses a second channel for a chat
+(`channel_ambiguous`) and never picks a phone by which one came last. A channel
+can outlive its app: killed or relaunched (an Xcode run, a crash), or with its
+close lost on a reconnect, it stays until its 30-second lease ends. A newer
+plugin lets the same phone (the same person, `deviceId` and `hostId`) replace
+its own channel at once. With an older one, the phone sends no close for the
+refused channel and tries again after the lease, up to three more times 32
+seconds apart (`NativeDeviceToolSession.runReopeningWhileHeld`); any change to
+the chat or connection cancels the wait. While it waits, Device access says it
+connects again in a moment; if another device keeps the chat, it says so.
+
 ## Transport and ownership
 
 The existing encrypted Link connection carries version-1
@@ -184,7 +203,7 @@ next pick there wins.
   `/native/context` lists `native-device-appearance-v1`. On its own, Appearance
   never puts "open a chat" or "check the plugin" in Device access; it only says
   when the plugin needs an update. A channel with only Appearance polls every
-  8 seconds instead of 0.75, since it opens for every chat.
+  8 seconds instead of 0.75, since it opens for every chat with the served agent.
 - Demo mode: `-test-agent-appearance '{"mode":"dark","color":"rose"}'` sends that
   one call through the real coordinator and tool when the first chat opens
   (`DeviceAppearanceFixture`, `AgentAppearanceUITests`).
