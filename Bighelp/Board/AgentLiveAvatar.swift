@@ -201,6 +201,9 @@ struct AgentHeroHeader: View {
     /// Hidden by choice (Settings › Chat layout): the chip shows only while
     /// there's a status, and holding the avatar offers Switch agent.
     var showsName = true
+    /// The chat's title (Settings › Chat › Session title), on the line under the name while
+    /// nothing is happening; a status or the agent's activity takes that line while it shows.
+    var sessionTitle: String? = nil
     let onAvatarTap: () -> Void
     let onNameTap: () -> Void
     @Environment(\.agentActivityInIsland) private var activityInIsland
@@ -226,8 +229,10 @@ struct AgentHeroHeader: View {
             .accessibilityActions {
                 if !showsName { Button("Switch agent", action: onNameTap) }
             }
-            if showsName || statusLine != nil {
+            if showsName || statusLine != nil || sessionTitle != nil {
             Button(action: onNameTap) {
+                // A long title stops short of the corner buttons; a short one keeps the chip snug.
+                BighelpHuggingWidth(maxWidth: 240) {
                 VStack(spacing: 1) {
                     if showsName {
                         Text(displayName)
@@ -235,13 +240,16 @@ struct AgentHeroHeader: View {
                             .foregroundStyle(theme.primaryText)
                             .lineLimit(1)
                     }
-                    if let line = statusLine {
+                    if let line = statusLine ?? sessionTitle {
                         Text(line)
                             .font(.bighelp(.caption2).weight(.medium))
                             .foregroundStyle(theme.secondaryText)
                             .lineLimit(1)
+                            .truncationMode(.tail)
                             .transition(.opacity)
+                            .accessibilityIdentifier(statusLine == nil ? "agent.hero.session-title" : "agent.hero.status")
                     }
+                }
                 }
                 .padding(.horizontal, BighelpTokens.space16)
                 .padding(.vertical, 6)
@@ -251,7 +259,7 @@ struct AgentHeroHeader: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(displayName)
-            .accessibilityValue(statusLine ?? "")
+            .accessibilityValue(statusLine ?? sessionTitle ?? "")
             .accessibilityHint("Switch agents or open a group chat.")
             .accessibilityIdentifier("agent.hero.name")
             .transition(.opacity)
@@ -259,6 +267,7 @@ struct AgentHeroHeader: View {
         }
         .animation(.snappy, value: activity)
         .animation(.snappy, value: status)
+        .animation(.snappy, value: sessionTitle)
         .animation(.snappy, value: avatarSize)
     }
 

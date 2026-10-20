@@ -53,7 +53,9 @@ change in both repos.
     (`simpleBotsMultiGateway`) lists every gateway's bots (`SimpleBotsGateways`, one `SimpleBotsBot` model
     keyed by `FleetID`): the gateway in use live, the others from the all-hosts copies. Pins live on each
     bot's own gateway; the primary bot is kept on the device (`simpleBotsMultiPrimary`). Acting on another
-    gateway's bot goes through `openFleet`; the home stays on screen while that gateway connects.
+    gateway's bot goes through `openFleet`; the home stays under the Noodle loader (`SimpleBotsOpeningOverlay`,
+    with Cancel) until the bot opens. A computer that doesn't answer gives the selection back to the one the tap
+    came from (`FleetSwitchFallback`), so neither the app nor its next launch is left on it.
   - First run (`FirstRunOnboardingView`) is Welcome, Connect, the optional plugin, notifications (only once the
     plugin is in), then Choose your mode (`FirstRunMode`: Bots, Sessions, Code). Optional steps have a small Skip;
     Connect and the mode don't. `FirstRunOnboarding.afterConnectKey` keeps it on screen after host setup's own
@@ -168,6 +170,10 @@ change in both repos.
   people, a note on each message that only the model sees. The wait is capped (1.2 s), so a slow host sends the
   message without a name. `UserIdentity.name` is empty until someone saves one; "You" is an on-screen placeholder
   (`displayName`) and must never be sent. Names are at most 40 characters.
+- **A lost create never locks an agent out:** every `session.create` sends the creation record's `intentID` as
+  `idempotency_key` (Hermes keeps it 5 minutes and answers a retry with the same session). An unfinished first Bot
+  Chat retries under that key, or resumes the session Hermes made and asks for its title again; it never blocks
+  New Chat (#440).
 - **A turn stays pending while it streams:** after `prompt.submit` returns `streaming`, the chat isn't "ready for a
   new turn" until the turn ends. A mid-turn Send must go through the steer/queue path (`sendMidSession`). Steer is
   the default.
@@ -519,6 +525,8 @@ Helpful, never a pile to clear (`BighelpNotificationGrouping`):
   and opening the app clears any still there.
 - The Live Activity uses the app's palette from the widget snapshot, like the Home widgets. Its four steps come from
   the phase Hermes reports, never a guessed percentage.
+- Every setup failure gets its own code where it happens (`BighelpNotificationErrorCode`, never reused or renumbered);
+  the FAQ is [docs/NOTIFICATION_ERROR_CODES.md](docs/NOTIFICATION_ERROR_CODES.md).
 
 ### Names that must stay "loopdy"
 
