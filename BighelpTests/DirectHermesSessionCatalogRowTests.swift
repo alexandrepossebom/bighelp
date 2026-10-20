@@ -31,4 +31,20 @@ struct DirectHermesSessionCatalogRowTests {
         #expect(throws: WorkspaceClientError.invalidResponse) { try DirectHermesSessionValidation.text("next\u{85}line", maximum: 64) }
         #expect(try DirectHermesSessionValidation.text("two\nlines\r\tok", maximum: 64) == "two\nlines\r\tok")
     }
+
+    /// One row the app can't read hides that row, not the whole list (the rest kept the old copy, silently).
+    @Test func unreadableRowHidesOnlyItself() async throws {
+        let workspace = try SessionWorkspaceStub()
+        var broken = try #require(DirectHermesSessionCatalogClientTests.session(id: "broken").object)
+        broken["started_at"] = .number(-1)
+        workspace.handler = { operation, _ in
+            switch operation {
+            case .profilesList: return DirectHermesSessionCatalogClientTests.profiles()
+            case .sessionsList: return DirectHermesSessionCatalogClientTests.ownershipPage([DirectHermesSessionCatalogClientTests.session(id: "before"), .object(broken), DirectHermesSessionCatalogClientTests.session(id: "after")])
+            default: throw WorkspaceClientError.invalidRequest
+            }
+        }
+        let records = try await DirectHermesSessionCatalogClientTests.client(workspace).list()
+        #expect(records.compactMap(\.remoteStoredID) == ["before", "after"])
+    }
 }

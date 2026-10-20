@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 /// The list request: its options and when the pages end.
 extension DirectHermesSessionCatalogClient {
@@ -18,5 +19,12 @@ extension DirectHermesSessionCatalogClient {
             guard !source.contains(",") else { throw WorkspaceClientError.invalidRequest }
         }
         if let path = options.cwdPrefix { try DirectHermesSessionValidation.hostPath(path) }
+    }
+
+    static func logUnreadableRows(_ count: Int) {
+        guard count > 0 else { return }
+        // The count only; never host data.
+        Logger(subsystem: "app.loopdy.mobile", category: "Sessions")
+            .error("Session list skipped \(count, privacy: .public) unreadable rows")
     }
 }
